@@ -1,7 +1,7 @@
-azugo.io/azugo v0.16.0 h1:nSroaKtC4HthTL/w+Yo3uv4LE4VSVCuuwLnvwTyre9U=
-azugo.io/azugo v0.16.0/go.mod h1:ZtI8ChsO0mEvK7k7OGgHmuYReoueeTXcXWnh027QJw8=
-azugo.io/core v0.15.0 h1:f7ibWbTX8nLQse29zxX89edsaXolffel0AfwDL86Pao=
-azugo.io/core v0.15.0/go.mod h1:EHa0tPwzoorsAE8MNQTz5D1OiHCAJr7DmkIdiQjgwc8=
+azugo.io/azugo v0.16.1 h1:UCbfWVTm7QBQQc2L1/igkbe9UpDUkjokfFaLpYLZ4sE=
+azugo.io/azugo v0.16.1/go.mod h1:PLFNlnT9j87VdqcuxxvtiTuOsFmTJpy6Ufc0ZtIlCRA=
+azugo.io/core v0.15.1 h1:1qxUeNpHjzAsf9Bw8L9Nz3Dp6l7iROPHVecHqBjGAX4=
+azugo.io/core v0.15.1/go.mod h1:EHa0tPwzoorsAE8MNQTz5D1OiHCAJr7DmkIdiQjgwc8=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
