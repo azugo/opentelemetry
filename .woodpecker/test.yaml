@@ -1,0 +1,28 @@
+when:
+  branch:
+    - main
+  event:
+    - push
+    - pull_request
+
+matrix:
+  GO_VERSION:
+    - 1.22
+
+steps:
+  - name: test
+    image: golang:${GO_VERSION}-alpine
+    pull: true
+    environment:
+      - CGO_ENABLED=0
+    commands:
+      - go test -cover -coverprofile=coverage.out -covermode=atomic -json ./... > report.json
+
+  - name: results
+    image: golang:${GO_VERSION}-alpine
+    environment:
+      - CGO_ENABLED=0
+    commands:
+      - apk --no-cache add git
+      - go install github.com/mfridman/tparse@latest
+      - tparse -all -file report.json
