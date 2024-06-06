@@ -1,5 +1,7 @@
 # Azugo OpenTelemetry
 
+[![status-badge](https://ci.azugo.io/api/badges/azugo/opentelemetry/status.svg)](https://ci.azugo.io/azugo/opentelemetry)
+
 Azugo framework [OpenTelemetry](https://opentelemetry.io) support.
 
 ## Features
