@@ -49,8 +49,8 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 }
 
 func FromContext(ctx context.Context) context.Context {
-	c, ok := ctx.(*azugo.Context)
-	if !ok {
+	c := azugo.RequestContext(ctx)
+	if c == nil {
 		return ctx
 	}
 
