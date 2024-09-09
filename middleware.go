@@ -111,6 +111,13 @@ func defaultRouteSpanNameFunc(ctx *azugo.Context, routeName string) string {
 // tracing of the request.
 func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 	return func(ctx *azugo.Context) {
+		if val, ok := ctx.UserValue("__log_request").(bool); !ok || !val {
+			// If the request is not to be logged, simply pass through to the handler
+			next(ctx)
+
+			return
+		}
+
 		for _, f := range tw.filters {
 			if !f(ctx) {
 				// Simply pass through to the handler if a filter rejects the request
