@@ -179,6 +179,10 @@ func splitHostPort(hostport string) (string, int) {
 		return host, -1
 	}
 
+	if p > 65535 {
+		return host, -1
+	}
+
 	return host, int(p)
 }
 
