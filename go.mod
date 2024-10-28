@@ -3,13 +3,13 @@ module azugo.io/opentelemetry
 go 1.22.0
 
 require (
-	azugo.io/azugo v0.20.1
-	azugo.io/core v0.18.0
+	azugo.io/azugo v0.20.2
+	azugo.io/core v0.18.1
 	github.com/go-quicktest/qt v1.101.0
 	github.com/google/go-cmp v0.6.0
 	github.com/kr/pretty v0.3.1
 	github.com/spf13/viper v1.19.0
-	github.com/valyala/fasthttp v1.56.0
+	github.com/valyala/fasthttp v1.57.0
 	go.opentelemetry.io/otel v1.31.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0
@@ -19,7 +19,7 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgraph-io/ristretto v0.2.0 // indirect
@@ -37,10 +37,10 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lafriks/http2 v0.5.0 // indirect
-	github.com/lafriks/pkcs8 v1.2.0 // indirect
+	github.com/lafriks/pkcs8 v1.2.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
