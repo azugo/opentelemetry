@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"azugo.io/core/instrumenter"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
 )
 

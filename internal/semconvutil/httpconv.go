@@ -10,7 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 )
 
 // HTTPServerRequest returns trace attributes for an HTTP request received by a
@@ -185,7 +185,7 @@ func (c *httpConv) ServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 	if user != nil && user.Authorized() {
 		if id := user.ID(); id != "" {
-			attrs = append(attrs, semconv.EnduserID(id))
+			attrs = append(attrs, semconv.UserID(id))
 		}
 	}
 
