@@ -201,11 +201,13 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		serviceName = app.AppName
 	}
 
-	defaultAttrs := []attribute.KeyValue{
+	defaultAttrs := make([]attribute.KeyValue, 0, 4)
+
+	defaultAttrs = append(defaultAttrs,
 		semconv.ServiceName(serviceName),
 		semconv.ServiceVersion(app.AppVer),
 		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
-	}
+	)
 
 	// Add system information attributes.
 	sysattrs, instanceID := sysinfoAttrs()
