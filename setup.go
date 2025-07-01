@@ -139,6 +139,27 @@ func sysinfoAttrs() ([]attribute.KeyValue, string) {
 	return attrs, instanceID
 }
 
+func parseResourceAttributes(resourceAttrs string) []attribute.KeyValue {
+	if resourceAttrs == "" {
+		return nil
+	}
+
+	var attrs []attribute.KeyValue
+
+	// Parse "key1=value1,key2=value2" format
+	pairs := strings.Split(resourceAttrs, ",")
+	for _, pair := range pairs {
+		kv := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(kv) == 2 {
+			key := strings.TrimSpace(kv[0])
+			value := strings.TrimSpace(kv[1])
+			attrs = append(attrs, attribute.String(key, value))
+		}
+	}
+
+	return attrs
+}
+
 func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvider, error) {
 	opt := make([]otlptracehttp.Option, 0, 1)
 
@@ -175,37 +196,51 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		return nil, fmt.Errorf("creating OTLP trace exporter: %w", err)
 	}
 
-	attrs := make([]attribute.KeyValue, 0, 4)
-
 	serviceName := config.ServiceName
 	if serviceName == "" {
 		serviceName = app.AppName
 	}
 
-	attrs = append(attrs,
+	defaultAttrs := []attribute.KeyValue{
 		semconv.ServiceName(serviceName),
 		semconv.ServiceVersion(app.AppVer),
 		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
-	)
+	}
 
 	// Add system information attributes.
 	sysattrs, instanceID := sysinfoAttrs()
 
 	if instanceID != "" {
-		attrs = append(attrs, semconv.ServiceInstanceID(instanceID))
+		defaultAttrs = append(defaultAttrs, semconv.ServiceInstanceID(instanceID))
 	}
 
-	attrs = append(attrs, sysattrs...)
+	defaultAttrs = append(defaultAttrs, sysattrs...)
+
+	defaultResource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		defaultAttrs...,
+	)
+
+	// Parse and add custom OTEL_RESOURCE_ATTRIBUTES
+	envResourceAttrs := parseResourceAttributes(config.ResourceAttributes)
+	envResource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		envResourceAttrs...,
+	)
+
+	finalResource, err := resource.Merge(defaultResource, envResource)
+	if err != nil {
+		return nil, fmt.Errorf("merging resources: %w", err)
+	}
 
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(
 			exporter,
 		),
 
-		trace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			attrs...,
-		)),
+		trace.WithResource(
+			finalResource,
+		),
 	)
 
 	return traceProvider, nil

@@ -18,6 +18,7 @@ type Configuration struct {
 	InsecureSkipVerify    bool   `mapstructure:"insecure_skip_verify"`
 	ServiceName           string `mapstructure:"service_name"`
 	ElasticAPMSecretToken string `mapstructure:"elastic_apm_secret_token"`
+	ResourceAttributes    string `mapstructure:"resource_attributes"`
 }
 
 // Validate OpenTracing configuration section.
@@ -33,6 +34,7 @@ func (c *Configuration) Bind(prefix string, v *viper.Viper) {
 	v.SetDefault(prefix+".insecure_skip_verify", false)
 	v.SetDefault(prefix+".elastic_apm_secret_token", st)
 
+	_ = v.BindEnv(prefix+".resource_attributes", "OTEL_RESOURCE_ATTRIBUTES")
 	_ = v.BindEnv(prefix+".disabled", "OTEL_SDK_DISABLED")
 	_ = v.BindEnv(prefix+".endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT")
 	_ = v.BindEnv(prefix+".insecure_skip_verify", "OTEL_EXPORTER_OTLP_INSECURE_SKIP_VERIFY")

@@ -11,12 +11,12 @@ Azugo framework [OpenTelemetry](https://opentelemetry.io) support.
 ## Usage
 
 ```go
-	t, err := opentelemetry.Use(app, config)
-	if err != nil {
-		panic(err)
-	}
+ t, err := opentelemetry.Use(app, config)
+ if err != nil {
+  panic(err)
+ }
 
-	app.AddTask(t)
+ app.AddTask(t)
 ```
 
 If tracing context needs to be used to get current span from `*azugo.Context` use special helper to access it:
@@ -31,6 +31,7 @@ span := trace.SpanFromContext(opentelemetry.FromContext(ctx))
 
 * `OTEL_SDK_DISABLED` - Disable tracing.
 * `OTEL_EXPORTER_OTLP_INSECURE_SKIP_VERIFY` - Insecure skip verify HTTPS certificates.
+* `OTEL_RESOURCE_ATTRIBUTES` - Set of custom resource attributes for OpenTelemetry. This is a comma-separated list of key-value pairs, e.g. `service.name=azugo,service.version=1.0.0`.
 * `ELASTIC_APM_SECRET_TOKEN` - Support Elastic APM server authentification secret token.
 * `ELASTIC_APM_SECRET_TOKEN_FILE` - Read Elastic APM secret token from specified file.
 
