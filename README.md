@@ -7,16 +7,17 @@ Azugo framework [OpenTelemetry](https://opentelemetry.io) support.
 ## Features
 
 * Tracing support for router handlers, HTTP client and cache.
+* **Log correlation with traces** - automatically includes trace and span IDs in log entries for correlation in Elastic Kibana.
 
 ## Usage
 
 ```go
-	t, err := opentelemetry.Use(app, config)
-	if err != nil {
-		panic(err)
-	}
+ t, err := opentelemetry.Use(app, config)
+ if err != nil {
+  panic(err)
+ }
 
-	app.AddTask(t)
+ app.AddTask(t)
 ```
 
 If tracing context needs to be used to get current span from `*azugo.Context` use special helper to access it:
@@ -33,6 +34,7 @@ span := trace.SpanFromContext(opentelemetry.FromContext(ctx))
 * `OTEL_EXPORTER_OTLP_INSECURE_SKIP_VERIFY` - Insecure skip verify HTTPS certificates.
 * `ELASTIC_APM_SECRET_TOKEN` - Support Elastic APM server authentification secret token.
 * `ELASTIC_APM_SECRET_TOKEN_FILE` - Read Elastic APM secret token from specified file.
+* `OTEL_TRACE_LOGGING` - Enable trace logging. If enabled, azugo logs will include trace and span IDs in log entries and will be sent to OpenTelemetry collector. This is necessary for correlation in Elastic Kibana or other OpenTelemetry compatible log management systems.
 
 ### Default
 

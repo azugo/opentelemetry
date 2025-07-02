@@ -4,10 +4,14 @@
 package opentelemetry
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
+	"strconv"
 	"strings"
+	"sync"
 
 	"azugo.io/opentelemetry/internal/semconvutil"
 
@@ -20,6 +24,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// goroutineTraceContexts is a thread-safe map to store trace contexts.
+var goroutineTraceContexts sync.Map
+
 const (
 	// ScopeName is the instrumentation scope name.
 	ScopeName = "azugo.io/opentelemetry"
@@ -30,7 +37,7 @@ const otelParentSpanContext = "__otelParentSpanContext"
 // middleware sets up a handler to start tracing the incoming
 // requests.  The service parameter should describe the name of the
 // (virtual) server handling the request.
-func middleware(opts ...Option) func(azugo.RequestHandler) azugo.RequestHandler {
+func middleware(config *Configuration, opts ...Option) func(azugo.RequestHandler) azugo.RequestHandler {
 	cfg := traceConfig(opts...)
 
 	tracer := cfg.TracerProvider.Tracer(
@@ -48,6 +55,7 @@ func middleware(opts ...Option) func(azugo.RequestHandler) azugo.RequestHandler 
 			publicEndpoint:         cfg.PublicEndpoint,
 			publicEndpointFn:       cfg.PublicEndpointFn,
 			filters:                cfg.Filters,
+			config:                 config,
 		}
 
 		return t.handle(h)
@@ -94,6 +102,7 @@ type traceware struct {
 	publicEndpoint         bool
 	publicEndpointFn       func(ctx *azugo.Context) bool
 	filters                []Filter
+	config                 *Configuration
 }
 
 // defaultRouteSpanNameFunc just reuses the route name as the span name.
@@ -107,8 +116,44 @@ func defaultRouteSpanNameFunc(ctx *azugo.Context, routeName string) string {
 	return s.String()
 }
 
-// handle implements the azugo.RequestHandler interface. It does the actual
-// tracing of the request.
+func getGoroutineID() uint64 {
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+
+	return n
+}
+
+func getCurrentSpanContext() trace.SpanContext {
+	gid := getGoroutineID()
+
+	if val, ok := goroutineTraceContexts.Load(gid); ok {
+		if spanCtx, ok := val.(trace.SpanContext); ok && spanCtx.IsValid() {
+			return spanCtx
+		}
+
+		goroutineTraceContexts.Delete(gid)
+	}
+
+	return trace.SpanContext{}
+}
+
+func clearTraceContextForGoroutine() {
+	gid := getGoroutineID()
+	goroutineTraceContexts.Delete(gid)
+}
+
+func setTraceContextForGoroutine(spanCtx trace.SpanContext) {
+	if !spanCtx.IsValid() {
+		return
+	}
+
+	gid := getGoroutineID()
+	goroutineTraceContexts.Store(gid, spanCtx)
+}
+
 func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 	return func(ctx *azugo.Context) {
 		if val, ok := ctx.UserValue("__log_request").(bool); !ok || !val {
@@ -157,6 +202,13 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 		c, span := tw.tracer.Start(c, spanName, opts...)
 
 		ctx.SetUserValue(otelParentSpanContext, c)
+
+		if tw.config != nil && tw.config.TraceLogging {
+			spanCtx := span.SpanContext()
+			setTraceContextForGoroutine(spanCtx)
+
+			defer clearTraceContextForGoroutine()
+		}
 
 		next(ctx)
 
