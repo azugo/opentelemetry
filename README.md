@@ -34,7 +34,7 @@ span := trace.SpanFromContext(opentelemetry.FromContext(ctx))
 * `OTEL_EXPORTER_OTLP_INSECURE_SKIP_VERIFY` - Insecure skip verify HTTPS certificates.
 * `ELASTIC_APM_SECRET_TOKEN` - Support Elastic APM server authentification secret token.
 * `ELASTIC_APM_SECRET_TOKEN_FILE` - Read Elastic APM secret token from specified file.
-* `OTEL_TRACE_LOGGING` - Enable trace logging. If enabled, azugo logs will include trace and span IDs in log entries and will be sent to OpenTelemetry collector. This is necessary for correlation in Elastic Kibana or other OpenTelemetry compatible log management systems.
+* `OTEL_TRACE_LOGGING` - Enable trace logging (default: `true`). If enabled, azugo logs will include trace and span IDs in log entries and will be sent to OpenTelemetry collector. This is necessary for correlation in Elastic Kibana or other OpenTelemetry compatible log management systems.
 
 ### Default
 
