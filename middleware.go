@@ -116,7 +116,7 @@ func defaultRouteSpanNameFunc(ctx *azugo.Context, routeName string) string {
 	return s.String()
 }
 
-func getGoroutineID() uint64 {
+func goroutineID() uint64 {
 	b := make([]byte, 64)
 	b = b[:runtime.Stack(b, false)]
 	b = bytes.TrimPrefix(b, []byte("goroutine "))
@@ -126,8 +126,8 @@ func getGoroutineID() uint64 {
 	return n
 }
 
-func getCurrentSpanContext() trace.SpanContext {
-	gid := getGoroutineID()
+func currentSpanCtx() trace.SpanContext {
+	gid := goroutineID()
 
 	if val, ok := goroutineTraceContexts.Load(gid); ok {
 		if spanCtx, ok := val.(trace.SpanContext); ok && spanCtx.IsValid() {
@@ -140,17 +140,17 @@ func getCurrentSpanContext() trace.SpanContext {
 	return trace.SpanContext{}
 }
 
-func clearTraceContextForGoroutine() {
-	gid := getGoroutineID()
+func clearTraceCtx() {
+	gid := goroutineID()
 	goroutineTraceContexts.Delete(gid)
 }
 
-func setTraceContextForGoroutine(spanCtx trace.SpanContext) {
+func setTraceCtx(spanCtx trace.SpanContext) {
 	if !spanCtx.IsValid() {
 		return
 	}
 
-	gid := getGoroutineID()
+	gid := goroutineID()
 	goroutineTraceContexts.Store(gid, spanCtx)
 }
 
@@ -205,9 +205,9 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 
 		if tw.config != nil && tw.config.TraceLogging {
 			spanCtx := span.SpanContext()
-			setTraceContextForGoroutine(spanCtx)
+			setTraceCtx(spanCtx)
 
-			defer clearTraceContextForGoroutine()
+			defer clearTraceCtx()
 		}
 
 		next(ctx)

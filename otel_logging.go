@@ -46,7 +46,7 @@ func (oc *otelLogging) Write(entry zapcore.Entry, fields []zapcore.Field) error 
 func (oc *otelLogging) sendOTel(entry zapcore.Entry, fields []zapcore.Field) {
 	ctx := context.Background()
 
-	if spanCtx := getCurrentSpanContext(); spanCtx.IsValid() {
+	if spanCtx := currentSpanCtx(); spanCtx.IsValid() {
 		ctx = trace.ContextWithSpanContext(ctx, spanCtx)
 	}
 
@@ -227,7 +227,7 @@ type TraceCore struct {
 }
 
 func (tc *TraceCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
-	spanCtx := getCurrentSpanContext()
+	spanCtx := currentSpanCtx()
 
 	if spanCtx.IsValid() {
 		fields = append(fields,
