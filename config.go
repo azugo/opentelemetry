@@ -18,6 +18,7 @@ type Configuration struct {
 	InsecureSkipVerify    bool   `mapstructure:"insecure_skip_verify"`
 	ServiceName           string `mapstructure:"service_name"`
 	ElasticAPMSecretToken string `mapstructure:"elastic_apm_secret_token"`
+	TraceLogging          bool   `mapstructure:"trace_logging"`
 }
 
 // Validate OpenTracing configuration section.
@@ -32,12 +33,14 @@ func (c *Configuration) Bind(prefix string, v *viper.Viper) {
 	v.SetDefault(prefix+".disabled", false)
 	v.SetDefault(prefix+".insecure_skip_verify", false)
 	v.SetDefault(prefix+".elastic_apm_secret_token", st)
+	v.SetDefault(prefix+".trace_logging", true)
 
 	_ = v.BindEnv(prefix+".disabled", "OTEL_SDK_DISABLED")
 	_ = v.BindEnv(prefix+".endpoint", "OTEL_EXPORTER_OTLP_ENDPOINT")
 	_ = v.BindEnv(prefix+".insecure_skip_verify", "OTEL_EXPORTER_OTLP_INSECURE_SKIP_VERIFY")
 	_ = v.BindEnv(prefix+".service_name", "OTEL_SERVICE_NAME")
 	_ = v.BindEnv(prefix+".elastic_apm_secret_token", "ELASTIC_APM_SECRET_TOKEN")
+	_ = v.BindEnv(prefix+".trace_logging", "OTEL_TRACE_LOGGING")
 }
 
 // IsDisabled returns true if the tracing is disabled.

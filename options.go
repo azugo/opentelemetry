@@ -21,6 +21,7 @@ type otelcfg struct {
 	PublicEndpoint         bool
 	PublicEndpointFn       PublicEndpointFilter
 	Filters                []Filter
+	TraceLogging           bool
 }
 
 // Option specifies instrumentation configuration options.
