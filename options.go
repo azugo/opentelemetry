@@ -8,12 +8,12 @@ import (
 
 	"azugo.io/azugo"
 	"go.opentelemetry.io/otel/propagation"
-	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // otelcfg is used to configure the mux middleware.
 type otelcfg struct {
-	TracerProvider         oteltrace.TracerProvider
+	TracerProvider         trace.TracerProvider
 	Propagators            propagation.TextMapPropagator
 	routeSpanNameFormatter RouteSpanNameFormatter
 	instrSpanNameFormatter InstrumentationSpanNameFormatter
@@ -80,7 +80,7 @@ func TextMapPropagator(propagators propagation.TextMapPropagator) Option {
 
 // TracerProvider specifies a tracer provider to use for creating a tracer.
 // If none is specified, the global provider is used.
-func TracerProvider(provider oteltrace.TracerProvider) Option {
+func TracerProvider(provider trace.TracerProvider) Option {
 	return optionFunc(func(cfg *otelcfg) {
 		if provider != nil {
 			cfg.TracerProvider = provider
@@ -110,7 +110,7 @@ func (f InstrumentationSpanNameFormatter) apply(c *otelcfg) {
 // InstrumentationRecorderFunc specifies a function to use for handling instrumentation events.
 // The function should return a function that can be used to finish the span and a boolean
 // indicating if specific instrumentation has been recorded.
-type InstrumentationRecorderFunc func(ctx context.Context, tracer oteltrace.Tracer, propagator propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool)
+type InstrumentationRecorderFunc func(ctx context.Context, tracer trace.Tracer, propagator propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool)
 
 type instrRecorder struct {
 	Name     string

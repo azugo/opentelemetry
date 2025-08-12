@@ -5,10 +5,14 @@ package opentelemetry
 
 import (
 	"context"
+	"fmt"
 
+	"azugo.io/azugo"
 	"azugo.io/core/instrumenter"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
-	oteltrace "go.opentelemetry.io/otel/trace"
+	"azugo.io/opentelemetry/internal/semconvutil"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func defaultInstrSpanNameFormatter(_ context.Context, _ string, _ ...any) string {
@@ -23,15 +27,15 @@ type namedRecorder struct {
 func instr(opts ...Option) instrumenter.Instrumenter {
 	cfg := traceConfig(opts...)
 
-	tracers := make(map[string]oteltrace.Tracer, len(cfg.instrRecorders))
+	tracers := make(map[string]trace.Tracer, len(cfg.instrRecorders))
 	recorders := make(map[string][]namedRecorder, len(cfg.instrRecorders))
 
 	for _, r := range cfg.instrRecorders {
 		if _, ok := tracers[r.Name]; !ok {
 			tracers[r.Name] = cfg.TracerProvider.Tracer(
 				ScopeName+"/"+r.Name,
-				oteltrace.WithInstrumentationVersion(Version()),
-				oteltrace.WithInstrumentationAttributes(semconv.TelemetrySDKLanguageGo),
+				trace.WithInstrumentationVersion(Version()),
+				trace.WithInstrumentationAttributes(semconv.TelemetrySDKLanguageGo),
 			)
 		}
 
@@ -51,6 +55,35 @@ func instr(opts ...Option) instrumenter.Instrumenter {
 	}
 
 	return func(ctx context.Context, op string, args ...interface{}) func(err error) {
+		// Special handling for panic handler
+		if op == azugo.InstrumentationPanic {
+			return func(err error) {
+				c := FromContext(ctx)
+
+				span := trace.SpanFromContext(c)
+
+				if span.SpanContext().IsValid() && span.IsRecording() {
+					span.SetStatus(codes.Error, fmt.Sprintf("%v", err))
+
+					if err != nil {
+						span.RecordError(err, trace.WithStackTrace(true))
+					}
+				}
+
+				actx, ok := ctx.(*azugo.Context)
+				if ok {
+					status := actx.Response().StatusCode()
+					if status > 0 {
+						span.SetAttributes(semconv.HTTPResponseStatusCode(status))
+					}
+
+					span.SetStatus(semconvutil.HTTPServerStatus(status))
+				}
+
+				span.End()
+			}
+		}
+
 		for _, r := range recorders[op] {
 			f, handled := r.Recorder(ctx, tracers[r.Name], cfg.Propagators, cfg.instrSpanNameFormatter, op, args...)
 			if handled {

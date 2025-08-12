@@ -5,19 +5,14 @@ package opentelemetry
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 
 	"azugo.io/opentelemetry/internal/semconvutil"
 
 	"azugo.io/azugo"
-	"github.com/valyala/fasthttp"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 const (
@@ -51,38 +46,6 @@ func middleware(opts ...Option) func(azugo.RequestHandler) azugo.RequestHandler 
 		}
 
 		return t.handle(h)
-	}
-}
-
-func panicHandler(ctx *azugo.Context, val any) {
-	ctx.Log().Error("Unhandled error", zap.Any("error", val))
-
-	c := FromContext(ctx)
-
-	span := trace.SpanFromContext(c)
-
-	var err error
-	if e, ok := val.(error); ok {
-		err = e
-	} else if e, ok := val.(string); ok {
-		err = errors.New(e)
-	}
-
-	if span.SpanContext().IsValid() && span.IsRecording() {
-		span.SetAttributes(semconv.HTTPResponseStatusCode(fasthttp.StatusInternalServerError))
-		span.SetStatus(codes.Error, fmt.Sprintf("%v", val))
-
-		if err != nil {
-			span.RecordError(err, trace.WithStackTrace(true))
-		}
-
-		span.End()
-	}
-
-	if err != nil {
-		ctx.Error(err)
-	} else {
-		ctx.StatusCode(fasthttp.StatusInternalServerError)
 	}
 }
 

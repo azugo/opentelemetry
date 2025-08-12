@@ -35,8 +35,6 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
 
-	app.RouterOptions().PanicHandler = panicHandler
-
 	app.Use(middleware(opts...))
 
 	app.Instrumentation(instr(opts...))

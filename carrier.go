@@ -13,9 +13,9 @@ import (
 func azugoHeaderCarrier(ctx *azugo.Context) propagation.TextMapCarrier {
 	h := make(http.Header)
 
-	ctx.Request().Header.VisitAll(func(k, v []byte) {
+	for k, v := range ctx.Request().Header.All() {
 		h.Add(string(k), string(v))
-	})
+	}
 
 	return propagation.HeaderCarrier(h)
 }
