@@ -33,11 +33,11 @@ type setup struct {
 	shutdownFns []func(context.Context) error
 }
 
-func (setup) Name() string {
+func (*setup) Name() string {
 	return "Open Telemetry"
 }
 
-func (setup) Start(context.Context) error {
+func (*setup) Start(context.Context) error {
 	return nil
 }
 
