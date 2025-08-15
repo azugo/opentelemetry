@@ -183,7 +183,7 @@ func splitHostPort(hostport string) (string, int) {
 		return host, -1
 	}
 
-	return host, int(p) //nolint:gosec
+	return host, int(p)
 }
 
 func netProtocol(proto string) (string, string) {
