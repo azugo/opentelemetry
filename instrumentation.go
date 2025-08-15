@@ -7,9 +7,10 @@ import (
 	"context"
 	"fmt"
 
+	"azugo.io/opentelemetry/internal/semconvutil"
+
 	"azugo.io/azugo"
 	"azugo.io/core/instrumenter"
-	"azugo.io/opentelemetry/internal/semconvutil"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"go.opentelemetry.io/otel/trace"

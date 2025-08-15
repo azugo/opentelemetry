@@ -33,11 +33,11 @@ type setup struct {
 	shutdownFns []func(context.Context) error
 }
 
-func (setup) Name() string {
+func (*setup) Name() string {
 	return "Open Telemetry"
 }
 
-func (setup) Start(context.Context) error {
+func (*setup) Start(context.Context) error {
 	return nil
 }
 
@@ -139,6 +139,26 @@ func sysinfoAttrs() ([]attribute.KeyValue, string) {
 	return attrs, instanceID
 }
 
+func customAttrs(resourceAttrs []string) []attribute.KeyValue {
+	if len(resourceAttrs) == 0 {
+		return nil
+	}
+
+	attrs := make([]attribute.KeyValue, 0, len(resourceAttrs))
+
+	// Parse "key1=value1" format
+	for _, attr := range resourceAttrs {
+		key, value, ok := strings.Cut(attr, "=")
+		if ok {
+			key = strings.TrimSpace(key)
+			value = strings.TrimSpace(value)
+			attrs = append(attrs, attribute.String(key, value))
+		}
+	}
+
+	return attrs
+}
+
 func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvider, error) {
 	opt := make([]otlptracehttp.Option, 0, 1)
 
@@ -175,12 +195,12 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		return nil, fmt.Errorf("creating OTLP trace exporter: %w", err)
 	}
 
-	attrs := make([]attribute.KeyValue, 0, 4)
-
 	serviceName := config.ServiceName
 	if serviceName == "" {
 		serviceName = app.AppName
 	}
+
+	attrs := make([]attribute.KeyValue, 0, 4)
 
 	attrs = append(attrs,
 		semconv.ServiceName(serviceName),
@@ -197,15 +217,30 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 
 	attrs = append(attrs, sysattrs...)
 
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		attrs...,
+	)
+
+	// Parse and add custom OTEL_RESOURCE_ATTRIBUTES
+	custom := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		customAttrs(config.ResourceAttributes)...,
+	)
+
+	res, err = resource.Merge(res, custom)
+	if err != nil {
+		return nil, fmt.Errorf("merging resources: %w", err)
+	}
+
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(
 			exporter,
 		),
 
-		trace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			attrs...,
-		)),
+		trace.WithResource(
+			res,
+		),
 	)
 
 	return traceProvider, nil
