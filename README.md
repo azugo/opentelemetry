@@ -11,12 +11,12 @@ Azugo framework [OpenTelemetry](https://opentelemetry.io) support.
 ## Usage
 
 ```go
- t, err := opentelemetry.Use(app, config)
- if err != nil {
-  panic(err)
- }
+	t, err := opentelemetry.Use(app, config)
+	if err != nil {
+		panic(err)
+	}
 
- app.AddTask(t)
+	app.AddTask(t)
 ```
 
 If tracing context needs to be used to get current span from `*azugo.Context` use special helper to access it:

@@ -13,12 +13,12 @@ import (
 
 // Configuration section for OpenTracing.
 type Configuration struct {
-	Disabled              bool   `mapstructure:"disabled"`
-	Endpoint              string `mapstructure:"endpoint"`
-	InsecureSkipVerify    bool   `mapstructure:"insecure_skip_verify"`
-	ServiceName           string `mapstructure:"service_name"`
-	ElasticAPMSecretToken string `mapstructure:"elastic_apm_secret_token"`
-	ResourceAttributes    string `mapstructure:"resource_attributes"`
+	Disabled              bool     `mapstructure:"disabled"`
+	Endpoint              string   `mapstructure:"endpoint"`
+	InsecureSkipVerify    bool     `mapstructure:"insecure_skip_verify"`
+	ServiceName           string   `mapstructure:"service_name"`
+	ElasticAPMSecretToken string   `mapstructure:"elastic_apm_secret_token"`
+	ResourceAttributes    []string `mapstructure:"resource_attributes"`
 }
 
 // Validate OpenTracing configuration section.

@@ -139,20 +139,19 @@ func sysinfoAttrs() ([]attribute.KeyValue, string) {
 	return attrs, instanceID
 }
 
-func parseResourceAttributes(resourceAttrs string) []attribute.KeyValue {
-	if resourceAttrs == "" {
+func customAttrs(resourceAttrs []string) []attribute.KeyValue {
+	if len(resourceAttrs) == 0 {
 		return nil
 	}
 
-	var attrs []attribute.KeyValue
+	attrs := make([]attribute.KeyValue, 0, len(resourceAttrs))
 
-	// Parse "key1=value1,key2=value2" format
-	pairs := strings.Split(resourceAttrs, ",")
-	for _, pair := range pairs {
-		kv := strings.SplitN(strings.TrimSpace(pair), "=", 2)
-		if len(kv) == 2 {
-			key := strings.TrimSpace(kv[0])
-			value := strings.TrimSpace(kv[1])
+	// Parse "key1=value1" format
+	for _, attr := range resourceAttrs {
+		key, value, ok := strings.Cut(attr, "=")
+		if ok {
+			key = strings.TrimSpace(key)
+			value = strings.TrimSpace(value)
 			attrs = append(attrs, attribute.String(key, value))
 		}
 	}
@@ -201,9 +200,9 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		serviceName = app.AppName
 	}
 
-	defaultAttrs := make([]attribute.KeyValue, 0, 4)
+	attrs := make([]attribute.KeyValue, 0, 4)
 
-	defaultAttrs = append(defaultAttrs,
+	attrs = append(attrs,
 		semconv.ServiceName(serviceName),
 		semconv.ServiceVersion(app.AppVer),
 		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
@@ -213,24 +212,23 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 	sysattrs, instanceID := sysinfoAttrs()
 
 	if instanceID != "" {
-		defaultAttrs = append(defaultAttrs, semconv.ServiceInstanceID(instanceID))
+		attrs = append(attrs, semconv.ServiceInstanceID(instanceID))
 	}
 
-	defaultAttrs = append(defaultAttrs, sysattrs...)
+	attrs = append(attrs, sysattrs...)
 
-	defaultResource := resource.NewWithAttributes(
+	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		defaultAttrs...,
+		attrs...,
 	)
 
 	// Parse and add custom OTEL_RESOURCE_ATTRIBUTES
-	envResourceAttrs := parseResourceAttributes(config.ResourceAttributes)
-	envResource := resource.NewWithAttributes(
+	custom := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		envResourceAttrs...,
+		customAttrs(config.ResourceAttributes)...,
 	)
 
-	finalResource, err := resource.Merge(defaultResource, envResource)
+	res, err = resource.Merge(res, custom)
 	if err != nil {
 		return nil, fmt.Errorf("merging resources: %w", err)
 	}
@@ -241,7 +239,7 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		),
 
 		trace.WithResource(
-			finalResource,
+			res,
 		),
 	)
 
