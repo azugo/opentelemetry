@@ -12,10 +12,10 @@ import (
 	"azugo.io/core/http"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func httpClientRecorder(ctx context.Context, tracer oteltrace.Tracer, propagator propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool) {
+func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool) {
 	c := FromContext(ctx)
 
 	req, resp, ok := http.InstrRequest(op, args...)
@@ -23,11 +23,11 @@ func httpClientRecorder(ctx context.Context, tracer oteltrace.Tracer, propagator
 		return nil, false
 	}
 
-	opts := []oteltrace.SpanStartOption{
-		oteltrace.WithAttributes(
+	opts := []trace.SpanStartOption{
+		trace.WithAttributes(
 			semconvutil.HTTPClientRequest(req)...,
 		),
-		oteltrace.WithSpanKind(oteltrace.SpanKindClient),
+		trace.WithSpanKind(trace.SpanKindClient),
 	}
 
 	spanName := spfmt(ctx, op, args...)
@@ -54,7 +54,7 @@ func httpClientRecorder(ctx context.Context, tracer oteltrace.Tracer, propagator
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 
-			span.RecordError(err, oteltrace.WithStackTrace(true))
+			span.RecordError(err, trace.WithStackTrace(true))
 
 			span.End()
 

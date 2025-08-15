@@ -8,11 +8,11 @@ import (
 	"azugo.io/core/cache"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
-	oteltrace "go.opentelemetry.io/otel/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func cacheRecorder(ctx context.Context, tr oteltrace.Tracer, _ propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...interface{}) (func(err error), bool) {
+func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...interface{}) (func(err error), bool) {
 	var (
 		name   string
 		method string
@@ -52,11 +52,11 @@ func cacheRecorder(ctx context.Context, tr oteltrace.Tracer, _ propagation.TextM
 		spanName = method + name
 	}
 
-	opts := []oteltrace.SpanStartOption{
-		oteltrace.WithAttributes(
+	opts := []trace.SpanStartOption{
+		trace.WithAttributes(
 			semconv.PeerService("cache"),
 		),
-		oteltrace.WithSpanKind(oteltrace.SpanKindInternal),
+		trace.WithSpanKind(trace.SpanKindInternal),
 	}
 
 	//nolint:spancheck
@@ -67,7 +67,7 @@ func cacheRecorder(ctx context.Context, tr oteltrace.Tracer, _ propagation.TextM
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 
-			span.RecordError(err, oteltrace.WithStackTrace(true))
+			span.RecordError(err, trace.WithStackTrace(true))
 		}
 
 		span.End()

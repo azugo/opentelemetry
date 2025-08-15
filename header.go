@@ -22,15 +22,15 @@ func (h headerCarrier) Keys() []string {
 
 	uniq := make(map[string]struct{})
 
-	h.Header.VisitAll(func(k, _ []byte) {
-		if _, ok := uniq[string(k)]; ok {
-			return
+	for k := range h.Header.All() {
+		key := string(k)
+		if _, ok := uniq[key]; ok {
+			continue
 		}
 
-		key := string(k)
-		keys = append(keys, string(k))
+		keys = append(keys, key)
 		uniq[key] = struct{}{}
-	})
+	}
 
 	return keys
 }

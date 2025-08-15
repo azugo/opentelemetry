@@ -10,7 +10,7 @@ import (
 	"azugo.io/core/http"
 	"github.com/valyala/fasthttp"
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 )
 
 var (
@@ -172,11 +172,11 @@ func (c *clientConv) ClientRequest(req *http.Request) []attribute.KeyValue {
 		attrs = append(attrs, c.HTTPRequestHeaderContentLengthKey.Int(contentLen))
 	}
 
-	req.Header.VisitAll(func(k, v []byte) {
+	for k, v := range req.Header.All() {
 		key := strings.ToLower(string(k))
 		// Skip user agent and content length as they are already handled.
 		if key == "user-agent" || key == "content-length" {
-			return
+			continue
 		}
 
 		val := string(v)
@@ -185,7 +185,7 @@ func (c *clientConv) ClientRequest(req *http.Request) []attribute.KeyValue {
 		}
 
 		attrs = append(attrs, attribute.String("http.request.header."+key, val))
-	})
+	}
 
 	return attrs
 }
@@ -225,12 +225,12 @@ func (c *clientConv) ClientResponse(resp *http.Response) []attribute.KeyValue {
 		attrs = append(attrs, c.HTTPResponseHeaderContentLengthKey.Int(contentLen))
 	}
 
-	resp.Header.VisitAll(func(k, v []byte) {
+	for k, v := range resp.Header.All() {
 		key := strings.ToLower(string(k))
 
 		// Skip content length as it is already handled.
 		if key == "content-length" {
-			return
+			continue
 		}
 
 		val := string(v)
@@ -239,7 +239,7 @@ func (c *clientConv) ClientResponse(resp *http.Response) []attribute.KeyValue {
 		}
 
 		attrs = append(attrs, attribute.String("http.response.header."+key, val))
-	})
+	}
 
 	return attrs
 }
