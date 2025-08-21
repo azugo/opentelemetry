@@ -9,14 +9,17 @@ import (
 	"azugo.io/azugo"
 	"azugo.io/core"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/log/global"
 )
 
 // Use OpenTelemetry for tracing in Azugo application.
 func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, error) {
-	shutdownFns := make([]func(context.Context) error, 0, 1)
+	shutdownFns := make([]func(context.Context) error, 0, 2)
 
 	if config == nil {
-		config = &Configuration{}
+		config = &Configuration{
+			TraceLogging: true,
+		}
 	}
 
 	// If tracing is disabled, return a no-op setup.
@@ -31,11 +34,24 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 
 	shutdownFns = append(shutdownFns, traceProvider.Shutdown)
 
+	if config.TraceLogging {
+		logProvider, err := newLogProvider(app, config)
+		if err != nil {
+			return nil, err
+		}
+
+		shutdownFns = append(shutdownFns, logProvider.Shutdown)
+
+		global.SetLoggerProvider(logProvider)
+
+		setupOTelLogging(app)
+	}
+
 	// Set the global OTEL providers
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
 
-	app.Use(middleware(opts...))
+	app.Use(middleware(config, opts...))
 
 	app.Instrumentation(instr(opts...))
 
