@@ -35,6 +35,8 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
 
+	app.SetExtendedContext(&azugoContext{})
+
 	app.Use(middleware(opts...))
 
 	app.Instrumentation(instr(opts...))
@@ -44,25 +46,6 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 		config:      config,
 		shutdownFns: shutdownFns,
 	}, nil
-}
-
-func FromContext(ctx context.Context) context.Context {
-	c := azugo.RequestContext(ctx)
-	if c == nil {
-		return ctx
-	}
-
-	val := c.UserValue(otelParentSpanContext)
-	if val == nil {
-		return ctx
-	}
-
-	sc, ok := val.(context.Context)
-	if !ok {
-		return ctx
-	}
-
-	return sc
 }
 
 type noop struct{}
