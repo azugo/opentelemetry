@@ -1,3 +1,6 @@
+// Copyright 2025 Azugo
+// SPDX-License-Identifier: Apache-2.0
+
 package opentelemetry
 
 import (
