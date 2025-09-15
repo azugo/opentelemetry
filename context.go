@@ -18,6 +18,11 @@ func (azugoContext) Context(ctx context.Context) context.Context {
 		return nil
 	}
 
+	// If the parent context is the same as the current context, avoid recursion.
+	if pctx == ctx {
+		return nil
+	}
+
 	spanCtx := trace.SpanContextFromContext(pctx)
 	if !spanCtx.IsValid() {
 		return nil
