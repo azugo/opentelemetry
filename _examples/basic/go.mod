@@ -3,7 +3,7 @@ module example/basic
 go 1.24.0
 
 require (
-	azugo.io/azugo v0.25.0
+	azugo.io/azugo v0.25.1
 	azugo.io/core v0.25.0
 	azugo.io/opentelemetry v0.7.0
 	github.com/spf13/viper v1.21.0
