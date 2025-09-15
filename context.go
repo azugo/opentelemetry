@@ -12,16 +12,23 @@ import (
 
 type azugoContext struct{}
 
+type traceExtendedContextKeyType int
+
+const currentExtendedContextKey traceExtendedContextKeyType = iota
+
 func (azugoContext) Context(ctx context.Context) context.Context {
 	pctx := FromContext(ctx)
 	if pctx == nil {
 		return nil
 	}
 
-	// If the parent context is the same as the current context, avoid recursion.
-	if pctx == ctx {
+	// If the parent context is the same as the current context or marked, avoid recursion.
+	if pctx == ctx || pctx.Value(currentExtendedContextKey) != nil {
 		return nil
 	}
+
+	// Prevent recursion by marking the context.
+	pctx = context.WithValue(pctx, currentExtendedContextKey, struct{}{})
 
 	spanCtx := trace.SpanContextFromContext(pctx)
 	if !spanCtx.IsValid() {
