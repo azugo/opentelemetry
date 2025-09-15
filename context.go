@@ -23,12 +23,12 @@ func (azugoContext) Context(ctx context.Context) context.Context {
 	}
 
 	// If the parent context is the same as the current context or marked, avoid recursion.
-	if pctx == ctx || pctx.Value(currentExtendedContextKey) != nil {
+	if pctx == ctx || ctx.Value(currentExtendedContextKey) != nil {
 		return nil
 	}
 
 	// Prevent recursion by marking the context.
-	pctx = context.WithValue(pctx, currentExtendedContextKey, struct{}{})
+	ctx = context.WithValue(ctx, currentExtendedContextKey, struct{}{})
 
 	spanCtx := trace.SpanContextFromContext(pctx)
 	if !spanCtx.IsValid() {
