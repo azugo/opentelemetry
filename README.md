@@ -7,6 +7,7 @@ Azugo framework [OpenTelemetry](https://opentelemetry.io) support.
 ## Features
 
 * Tracing support for router handlers, HTTP client and cache.
+* **Log correlation with traces** - automatically includes trace and span IDs in log entries for correlation in Elastic Kibana.
 
 ## Usage
 
@@ -34,6 +35,7 @@ span := trace.SpanFromContext(opentelemetry.FromContext(ctx))
 * `OTEL_RESOURCE_ATTRIBUTES` - Set of custom resource attributes for OpenTelemetry. This is a comma-separated list of key-value pairs, e.g. `deployment.environment=local`.
 * `ELASTIC_APM_SECRET_TOKEN` - Support Elastic APM server authentification secret token.
 * `ELASTIC_APM_SECRET_TOKEN_FILE` - Read Elastic APM secret token from specified file.
+* `OTEL_TRACE_LOGGING` - Enable trace logging (default: `true`). If enabled, azugo logs will include trace and span IDs in log entries and will be sent to OpenTelemetry collector. This is necessary for correlation in Elastic Kibana or other OpenTelemetry compatible log management systems.
 
 ### Default
 
