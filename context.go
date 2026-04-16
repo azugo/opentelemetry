@@ -12,35 +12,24 @@ import (
 
 type azugoContext struct{}
 
-type traceExtendedContextKeyType int
-
-const currentExtendedContextKey traceExtendedContextKeyType = iota
-
 func (azugoContext) Context(ctx context.Context) context.Context {
 	pctx := FromContext(ctx)
-	if pctx == nil {
+	// If the parent context is the same as the current context avoid recursion.
+	if pctx == nil || pctx == ctx {
 		return nil
 	}
 
-	// If the parent context is the same as the current context or marked, avoid recursion.
-	if pctx == ctx || ctx.Value(currentExtendedContextKey) != nil {
+	span := trace.SpanFromContext(pctx)
+	if !span.SpanContext().IsValid() {
 		return nil
 	}
 
-	// Prevent recursion by marking the context.
-	ctx = context.WithValue(ctx, currentExtendedContextKey, struct{}{})
-
-	spanCtx := trace.SpanContextFromContext(pctx)
-	if !spanCtx.IsValid() {
+	rctx := azugo.RequestContext(ctx)
+	if rctx == nil || rctx.Context() == nil {
 		return nil
 	}
 
-	c := trace.ContextWithSpanContext(ctx, spanCtx)
-	if span := trace.SpanFromContext(pctx); span != nil {
-		return trace.ContextWithSpan(c, span)
-	}
-
-	return c
+	return trace.ContextWithSpan(rctx.Context(), span)
 }
 
 // FromContext extracts the parent span context from the Azugo context.
