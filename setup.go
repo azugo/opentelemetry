@@ -23,7 +23,8 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
+	compsemconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.uber.org/zap"
 )
 
@@ -206,6 +207,8 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		semconv.ServiceName(serviceName),
 		semconv.ServiceVersion(app.AppVer),
 		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
+		// For compatibility with older OTEL versions
+		compsemconv.DeploymentEnvironment(strings.ToLower(string(app.Env()))),
 	)
 
 	// Add system information attributes.
