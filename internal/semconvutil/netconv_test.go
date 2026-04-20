@@ -1,6 +1,7 @@
 // Copyright 2024 The OpenTelemetry Authors, Azugo
 // SPDX-License-Identifier: Apache-2.0
 
+//nolint:testpackage
 package semconvutil
 
 import (
@@ -9,7 +10,6 @@ import (
 	"github.com/go-quicktest/qt"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kr/pretty"
-
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -19,6 +19,8 @@ const (
 )
 
 func TestNetTransport(t *testing.T) {
+	t.Parallel()
+
 	transports := map[string]attribute.KeyValue{
 		"tcp":        attribute.String("network.transport", "tcp"),
 		"tcp4":       attribute.String("network.transport", "tcp"),
@@ -41,6 +43,8 @@ func TestNetTransport(t *testing.T) {
 }
 
 func TestServer(t *testing.T) {
+	t.Parallel()
+
 	testAddrs(t, []addrTest{
 		{address: "", expected: nil},
 		{address: "192.0.0.1", expected: []attribute.KeyValue{
@@ -54,16 +58,22 @@ func TestServer(t *testing.T) {
 }
 
 func TestServerAddress(t *testing.T) {
+	t.Parallel()
+
 	expected := attribute.Key("server.address").String(addr)
 	qt.Check(t, qt.Equals(nc.ServerAddress(addr), expected))
 }
 
 func TestServerPort(t *testing.T) {
+	t.Parallel()
+
 	expected := attribute.Key("server.port").Int(port)
 	qt.Check(t, qt.Equals(nc.ServerPort(port), expected))
 }
 
 func TestNetworkPeer(t *testing.T) {
+	t.Parallel()
+
 	testAddrs(t, []addrTest{
 		{address: "", expected: nil},
 		{address: "example.com", expected: []attribute.KeyValue{
@@ -84,16 +94,22 @@ func TestNetworkPeer(t *testing.T) {
 }
 
 func TestNetworkPeerAddress(t *testing.T) {
+	t.Parallel()
+
 	expected := attribute.Key("network.peer.address").String(addr)
 	qt.Check(t, qt.Equals(nc.NetworkPeerAddress(addr), expected))
 }
 
 func TestNetworkPeerPort(t *testing.T) {
+	t.Parallel()
+
 	expected := attribute.Key("network.peer.port").Int(port)
 	qt.Check(t, qt.Equals(nc.NetworkPeerPort(port), expected))
 }
 
 func TestNetFamily(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		network string
 		address string
@@ -120,6 +136,8 @@ func TestNetFamily(t *testing.T) {
 }
 
 func TestSplitHostPort(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		hostport string
 		host     string
@@ -171,9 +189,12 @@ func testAddrs(t *testing.T, tests []addrTest, f func(string) []attribute.KeyVal
 }
 
 func TestNetProtocol(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		name, version string
 	}
+
 	tests := map[string]testCase{
 		"HTTP/1.0":        {name: "http", version: "1.0"},
 		"HTTP/1.1":        {name: "http", version: "1.1"},

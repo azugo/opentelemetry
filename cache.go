@@ -1,6 +1,7 @@
 // Copyright 2024 Azugo
 // SPDX-License-Identifier: Apache-2.0
 
+// Package opentelemetry provides OpenTelemetry integration for Azugo applications.
 package opentelemetry
 
 import (
@@ -9,11 +10,11 @@ import (
 	"azugo.io/core/cache"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...interface{}) (func(err error), bool) {
+func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool) {
 	var (
 		name   string
 		method string
@@ -55,7 +56,7 @@ func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPr
 
 	opts := []trace.SpanStartOption{
 		trace.WithAttributes(
-			semconv.PeerService("cache"),
+			semconv.ServicePeerName("cache"),
 		),
 		trace.WithSpanKind(trace.SpanKindInternal),
 	}

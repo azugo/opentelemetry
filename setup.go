@@ -18,13 +18,15 @@ import (
 	"azugo.io/core/system"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	compsemconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.uber.org/zap"
 )
 
@@ -53,7 +55,9 @@ func (s *setup) Stop() {
 
 	s.shutdownFns = nil
 
-	s.app.Log().Warn("Open Telemetry shutdown error", zap.Error(err))
+	if err != nil {
+		s.app.Log().Warn("Open Telemetry shutdown error", zap.Error(err))
+	}
 }
 
 func newPropagator() propagation.TextMapPropagator {
@@ -173,7 +177,10 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 		case "http":
 			opt = append(opt, otlptracehttp.WithEndpoint(u.Host), otlptracehttp.WithInsecure())
 		case "https":
-			opt = append(opt, otlptracehttp.WithEndpoint(u.Host))
+			opt = append(opt, otlptracehttp.WithEndpoint(u.Host), otlptracehttp.WithTLSClientConfig(&tls.Config{
+				//nolint:gosec
+				InsecureSkipVerify: config.InsecureSkipVerify,
+			}))
 		default:
 			return nil, fmt.Errorf("invalid OTLP endpoint scheme: %s", u.Scheme)
 		}
@@ -184,11 +191,6 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 			"Authorization": "ApiKey " + config.ElasticAPMSecretToken,
 		}))
 	}
-
-	opt = append(opt, otlptracehttp.WithTLSClientConfig(&tls.Config{
-		//nolint:gosec
-		InsecureSkipVerify: config.InsecureSkipVerify,
-	}))
 
 	// TODO: support for GRPC
 	exporter, err := otlptrace.New(app.BackgroundContext(), otlptracehttp.NewClient(opt...))
@@ -247,6 +249,64 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 	)
 
 	return traceProvider, nil
+}
+
+func newLogProvider(app *azugo.App, config *Configuration) (*log.LoggerProvider, error) {
+	opt := make([]otlploghttp.Option, 0, 1)
+
+	if config.Endpoint != "" {
+		u, err := url.Parse(config.Endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("parsing OTLP endpoint: %w", err)
+		}
+
+		switch u.Scheme {
+		case "http":
+			opt = append(opt, otlploghttp.WithEndpoint(u.Host), otlploghttp.WithInsecure())
+		case "https":
+			opt = append(opt, otlploghttp.WithEndpoint(u.Host), otlploghttp.WithTLSClientConfig(&tls.Config{
+				//nolint:gosec
+				InsecureSkipVerify: config.InsecureSkipVerify,
+			}))
+		default:
+			return nil, fmt.Errorf("invalid OTLP endpoint scheme: %s", u.Scheme)
+		}
+	}
+
+	if config.ElasticAPMSecretToken != "" {
+		opt = append(opt, otlploghttp.WithHeaders(map[string]string{
+			"Authorization": "ApiKey " + config.ElasticAPMSecretToken,
+		}))
+	}
+
+	exporter, err := otlploghttp.New(app.BackgroundContext(), opt...)
+	if err != nil {
+		return nil, fmt.Errorf("creating OTLP log exporter: %w", err)
+	}
+
+	serviceName := config.ServiceName
+	if serviceName == "" {
+		serviceName = app.AppName
+	}
+
+	attrs := make([]attribute.KeyValue, 0, 4)
+	attrs = append(attrs,
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion(app.AppVer),
+		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
+	)
+
+	sysattrs, instanceID := sysinfoAttrs()
+	if instanceID != "" {
+		attrs = append(attrs, semconv.ServiceInstanceID(instanceID))
+	}
+
+	attrs = append(attrs, sysattrs...)
+
+	return log.NewLoggerProvider(
+		log.WithProcessor(log.NewBatchProcessor(exporter)),
+		log.WithResource(resource.NewWithAttributes(semconv.SchemaURL, attrs...)),
+	), nil
 }
 
 func traceConfig(opts ...Option) *otelcfg {

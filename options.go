@@ -101,7 +101,7 @@ func (f RouteSpanNameFormatter) apply(c *otelcfg) {
 // InstrumentationSpanNameFormatter specifies a function to use for generating a custom span
 // name. By default, the span name is formatted based on the operation type and the arguments.
 // If the provided function returns an empty string, the default span name will be used.
-type InstrumentationSpanNameFormatter func(ctx context.Context, op string, args ...interface{}) string
+type InstrumentationSpanNameFormatter func(ctx context.Context, op string, args ...any) string
 
 func (f InstrumentationSpanNameFormatter) apply(c *otelcfg) {
 	c.instrSpanNameFormatter = f

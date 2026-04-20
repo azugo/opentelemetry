@@ -11,8 +11,10 @@ import (
 
 	"azugo.io/azugo"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -20,7 +22,10 @@ const (
 	ScopeName = "azugo.io/opentelemetry"
 )
 
-const otelParentSpanContext = "__otelParentSpanContext"
+const (
+	otelParentSpanContext = "__otelParentSpanContext"
+	otelContextFieldKey   = "__otelContext"
+)
 
 // middleware sets up a handler to start tracing the incoming
 // requests.  The service parameter should describe the name of the
@@ -53,7 +58,7 @@ type traceware struct {
 	tracer                 trace.Tracer
 	propagators            propagation.TextMapPropagator
 	routeSpanNameFormatter func(ctx *azugo.Context, routeName string) string
-	instrSpanNameFormatter func(ctx context.Context, op string, args ...interface{}) string
+	instrSpanNameFormatter func(ctx context.Context, op string, args ...any) string
 	publicEndpoint         bool
 	publicEndpointFn       func(ctx *azugo.Context) bool
 	filters                []Filter
@@ -120,6 +125,12 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 		c, span := tw.tracer.Start(c, spanName, opts...)
 
 		ctx.SetUserValue(otelParentSpanContext, c)
+
+		_ = ctx.AddLogFields(
+			zap.Field{Key: otelContextFieldKey, Type: zapcore.SkipType, Interface: c},
+			zap.String("span.id", span.SpanContext().SpanID().String()),
+			zap.String("trace.id", span.SpanContext().TraceID().String()),
+		)
 
 		next(ctx)
 
