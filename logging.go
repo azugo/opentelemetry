@@ -18,6 +18,7 @@ type logDriver struct {
 	opts     []log.LoggerOption
 	attr     []log.KeyValue
 	ctx      context.Context
+	minLevel zapcore.Level
 }
 
 func (l *logDriver) clone() *logDriver {
@@ -27,23 +28,23 @@ func (l *logDriver) clone() *logDriver {
 		logger:   l.logger,
 		attr:     slices.Clone(l.attr),
 		ctx:      l.ctx,
+		minLevel: l.minLevel,
 	}
 }
 
 // Enabled decides whether a given logging level is enabled when logging a message.
 func (l *logDriver) Enabled(level zapcore.Level) bool {
+	if level < l.minLevel {
+		return false
+	}
+
 	return l.logger.Enabled(l.ctx, log.EnabledParameters{Severity: convertLogLevel(level)})
 }
 
 // Check determines whether the supplied Entry should be logged.
 // If the entry should be logged, the Core adds itself to the CheckedEntry and returns the result.
 func (l *logDriver) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
-	logger := l.logger
-	if ent.LoggerName != "" {
-		logger = l.provider.Logger(ent.LoggerName, l.opts...)
-	}
-
-	if logger.Enabled(l.ctx, log.EnabledParameters{Severity: convertLogLevel(ent.Level)}) {
+	if l.Enabled(ent.Level) {
 		return ce.AddCore(ent, l)
 	}
 
@@ -159,7 +160,7 @@ func convertLogLevel(level zapcore.Level) log.Severity {
 	}
 }
 
-func newLogCore(ctx context.Context, provider log.LoggerProvider, appName string) zapcore.Core {
+func newLogCore(ctx context.Context, provider log.LoggerProvider, appName string, minLevel zapcore.Level) zapcore.Core {
 	opts := []log.LoggerOption{
 		log.WithSchemaURL(semconv.SchemaURL),
 		log.WithInstrumentationVersion(Version()),
@@ -170,5 +171,6 @@ func newLogCore(ctx context.Context, provider log.LoggerProvider, appName string
 		logger:   provider.Logger(appName, opts...),
 		opts:     opts,
 		ctx:      ctx,
+		minLevel: minLevel,
 	}
 }

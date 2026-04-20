@@ -40,8 +40,8 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	shutdownFns = append(shutdownFns, logProvider.Shutdown)
 
 	// Register the otel log driver backed by this app's log provider (not the global one).
-	core.RegisterLogDriver("otel", func(a *core.App, _, _ string, _ zapcore.Level) (zapcore.Core, error) {
-		return newLogCore(a.BackgroundContext(), logProvider, a.AppName), nil
+	core.RegisterLogDriver("otel", func(a *core.App, _, _ string, level zapcore.Level) (zapcore.Core, error) {
+		return newLogCore(a.BackgroundContext(), logProvider, a.AppName, level), nil
 	})
 
 	// Set the global OTEL providers
