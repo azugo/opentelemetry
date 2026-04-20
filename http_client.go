@@ -12,6 +12,7 @@ import (
 	"azugo.io/core/http"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -52,19 +53,16 @@ func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator pro
 	//nolint:spancheck
 	return func(err error) {
 		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-
+			span.SetAttributes(semconv.ErrorType(err))
 			span.RecordError(err, trace.WithStackTrace(true))
-
+			span.SetStatus(codes.Error, err.Error())
 			span.End()
 
 			return
 		}
 
 		span.SetAttributes(semconvutil.HTTPClientResponse(resp)...)
-
-		span.SetStatus(semconvutil.HTTPServerStatus(resp.StatusCode()))
-
+		span.SetStatus(semconvutil.HTTPClientStatus(resp.StatusCode()))
 		span.End()
 	}, true
 }
