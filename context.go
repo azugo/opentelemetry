@@ -32,7 +32,7 @@ func (azugoContext) Context(ctx context.Context) context.Context {
 	return trace.ContextWithSpan(rctx.Context(), span)
 }
 
-// FromContext extracts the parent span context from the Azugo context.
+// FromContext returns the parent span context stored in the Azugo request context, if any.
 func FromContext(ctx context.Context) context.Context {
 	c := azugo.RequestContext(ctx)
 	if c == nil {

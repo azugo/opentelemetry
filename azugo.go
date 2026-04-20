@@ -61,26 +61,6 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	}, nil
 }
 
-// FromContext returns the parent span context stored in the Azugo request context, if any.
-func FromContext(ctx context.Context) context.Context {
-	c := azugo.RequestContext(ctx)
-	if c == nil {
-		return ctx
-	}
-
-	val := c.UserValue(otelParentSpanContext)
-	if val == nil {
-		return ctx
-	}
-
-	sc, ok := val.(context.Context)
-	if !ok {
-		return ctx
-	}
-
-	return sc
-}
-
 type noop struct{}
 
 func (noop) Name() string {
