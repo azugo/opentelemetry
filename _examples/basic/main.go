@@ -7,6 +7,7 @@ import (
 	"azugo.io/core/validation"
 	"azugo.io/opentelemetry"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 type Configuration struct {
@@ -70,6 +71,8 @@ func main() {
 	})
 
 	app.Get("/user/{id}", func(ctx *azugo.Context) {
+		ctx.Log().Info("user request received", zap.String("id", ctx.Params.String("id")))
+
 		ctx.JSON(struct {
 			ID string `json:"id"`
 		}{

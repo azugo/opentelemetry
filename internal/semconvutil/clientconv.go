@@ -1,6 +1,7 @@
 // Copyright 2024 The OpenTelemetry Authors, Azugo
 // SPDX-License-Identifier: Apache-2.0
 
+// Package semconvutil provides utilities for OpenTelemetry semantic conventions.
 package semconvutil
 
 import (
@@ -10,7 +11,7 @@ import (
 	"azugo.io/core/http"
 	"github.com/valyala/fasthttp"
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 	redactedHeaderValue = "****"
 )
 
-// ClientRequest returns attributes for an HTTP request sent by client.
+// HTTPClientRequest returns attributes for an HTTP request sent by client.
 //
 // The following attributes are always returned: "http.request.method", "url.scheme",
 // "url.full", "server.address", "network.protocol.name", "network.protocol.version",
@@ -28,7 +29,7 @@ func HTTPClientRequest(req *http.Request) []attribute.KeyValue {
 	return cc.ClientRequest(req)
 }
 
-// ClientResponse returns attributes for an HTTP response received by client.
+// HTTPClientResponse returns attributes for an HTTP response received by client.
 //
 // The following attributes are always returned: "http.response.status_code".
 func HTTPClientResponse(resp *http.Response) []attribute.KeyValue {

@@ -12,7 +12,7 @@ import (
 	"azugo.io/azugo"
 	"azugo.io/core/instrumenter"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -55,7 +55,7 @@ func instr(opts ...Option) instrumenter.Instrumenter {
 		}
 	}
 
-	return func(ctx context.Context, op string, args ...interface{}) func(err error) {
+	return func(ctx context.Context, op string, args ...any) func(err error) {
 		// Special handling for panic handler
 		if op == azugo.InstrumentationPanic {
 			return func(err error) {

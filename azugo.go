@@ -9,11 +9,12 @@ import (
 	"azugo.io/azugo"
 	"azugo.io/core"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap/zapcore"
 )
 
 // Use OpenTelemetry for tracing in Azugo application.
 func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, error) {
-	shutdownFns := make([]func(context.Context) error, 0, 1)
+	shutdownFns := make([]func(context.Context) error, 0, 2)
 
 	if config == nil {
 		config = &Configuration{}
@@ -31,6 +32,18 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 
 	shutdownFns = append(shutdownFns, traceProvider.Shutdown)
 
+	logProvider, err := newLogProvider(app, config)
+	if err != nil {
+		return nil, err
+	}
+
+	shutdownFns = append(shutdownFns, logProvider.Shutdown)
+
+	// Register the otel log driver backed by this app's log provider (not the global one).
+	core.RegisterLogDriver("otel", func(a *core.App, _, _ string, _ zapcore.Level) (zapcore.Core, error) {
+		return newLogCore(a.BackgroundContext(), logProvider, a.AppName), nil
+	})
+
 	// Set the global OTEL providers
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
@@ -46,6 +59,7 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	}, nil
 }
 
+// FromContext returns the parent span context stored in the Azugo request context, if any.
 func FromContext(ctx context.Context) context.Context {
 	c := azugo.RequestContext(ctx)
 	if c == nil {
