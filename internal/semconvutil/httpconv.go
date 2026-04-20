@@ -46,6 +46,13 @@ func HTTPServerStatus(code int) (codes.Code, string) {
 	return hc.ServerStatus(code)
 }
 
+// HTTPClientStatus returns a span status code and message for an HTTP status code
+// value returned by a server to a client request. Status codes in the 4xx and
+// 5xx ranges are returned as errors.
+func HTTPClientStatus(code int) (codes.Code, string) {
+	return hc.ClientStatus(code)
+}
+
 // httpConv are the HTTP semantic convention attributes defined for a version
 // of the OpenTelemetry specification.
 type httpConv struct {
@@ -264,6 +271,21 @@ func (c *httpConv) ServerStatus(code int) (codes.Code, string) {
 	}
 
 	if code >= 500 {
+		return codes.Error, ""
+	}
+
+	return codes.Unset, ""
+}
+
+// ClientStatus returns a span status code and message for an HTTP status code
+// value returned by a server to a client request. Status codes in the 4xx and
+// 5xx ranges are returned as errors.
+func (c *httpConv) ClientStatus(code int) (codes.Code, string) {
+	if code < 100 || code >= 600 {
+		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
+	}
+
+	if code >= 400 {
 		return codes.Error, ""
 	}
 
