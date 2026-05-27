@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	compsemconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
 	"go.uber.org/zap"
 )
 
@@ -208,10 +208,20 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 	attrs = append(attrs,
 		semconv.ServiceName(serviceName),
 		semconv.ServiceVersion(app.AppVer),
-		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
 		// For compatibility with older OTEL versions
 		compsemconv.DeploymentEnvironment(strings.ToLower(string(app.Env()))),
 	)
+
+	switch env := app.Env(); {
+	case env.IsProduction():
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameProduction)
+	case env.IsStaging():
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameStaging)
+	case env.IsDevelopment():
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameDevelopment)
+	default:
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameTest)
+	}
 
 	// Add system information attributes.
 	sysattrs, instanceID := sysinfoAttrs()
@@ -293,8 +303,20 @@ func newLogProvider(app *azugo.App, config *Configuration) (*log.LoggerProvider,
 	attrs = append(attrs,
 		semconv.ServiceName(serviceName),
 		semconv.ServiceVersion(app.AppVer),
-		semconv.DeploymentEnvironmentName(strings.ToLower(string(app.Env()))),
+		// For compatibility with older OTEL versions
+		compsemconv.DeploymentEnvironment(strings.ToLower(string(app.Env()))),
 	)
+
+	switch env := app.Env(); {
+	case env.IsProduction():
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameProduction)
+	case env.IsStaging():
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameStaging)
+	case env.IsDevelopment():
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameDevelopment)
+	default:
+		attrs = append(attrs, semconv.DeploymentEnvironmentNameTest)
+	}
 
 	sysattrs, instanceID := sysinfoAttrs()
 	if instanceID != "" {
