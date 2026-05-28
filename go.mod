@@ -3,7 +3,7 @@ module azugo.io/opentelemetry
 go 1.25.0
 
 require (
-	azugo.io/azugo v0.31.1
+	azugo.io/azugo v0.31.2
 	azugo.io/core v0.31.1
 	github.com/go-quicktest/qt v1.102.0
 	github.com/google/go-cmp v0.7.0
