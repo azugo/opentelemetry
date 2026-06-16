@@ -118,19 +118,28 @@ func (l *logDriver) Sync() error {
 }
 
 func (l *logDriver) convertLogField(fields []zapcore.Field) (context.Context, []log.KeyValue) {
-	var ctx context.Context
+	var (
+		ctx     context.Context
+		spanCtx trace.SpanContext
+		hasSpan bool
+	)
 
 	enc := newLogObjectEncoder(len(fields))
 	for _, field := range fields {
 		if field.Key == otelContextFieldKey {
 			if sc, ok := field.Interface.(trace.SpanContext); ok && sc.IsValid() {
-				ctx = trace.ContextWithSpanContext(l.ctx, sc)
+				spanCtx = sc
+				hasSpan = true
 			}
 
 			continue
 		}
 
 		field.AddTo(enc)
+	}
+
+	if hasSpan {
+		ctx = trace.ContextWithSpanContext(l.ctx, spanCtx)
 	}
 
 	enc.calculate(enc.root)
