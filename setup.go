@@ -45,7 +45,7 @@ func (*setup) Start(context.Context) error {
 }
 
 func (s *setup) Stop() {
-	ctx := s.app.BackgroundContext()
+	ctx := context.WithoutCancel(s.app.BackgroundContext())
 
 	var err error
 
