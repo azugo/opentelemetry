@@ -22,10 +22,7 @@ const (
 	ScopeName = "azugo.io/opentelemetry"
 )
 
-const (
-	otelParentSpanContext = "__otelParentSpanContext"
-	otelContextFieldKey   = "__otelContext"
-)
+const otelContextFieldKey = "__otelContext"
 
 // middleware sets up a handler to start tracing the incoming
 // requests.  The service parameter should describe the name of the
@@ -95,10 +92,7 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 			}
 		}
 
-		c := tw.propagators.Extract(ctx, azugoHeaderCarrier(ctx))
-		if ac, ok := c.(*azugo.Context); ok {
-			ctx = ac
-		}
+		c := tw.propagators.Extract(ctx.Context(), azugoHeaderCarrier(ctx))
 
 		opts := []trace.SpanStartOption{
 			trace.WithAttributes(semconvutil.HTTPServerRequest(ctx)...),
@@ -124,10 +118,10 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 		spanName := tw.routeSpanNameFormatter(ctx, routeStr)
 		c, span := tw.tracer.Start(c, spanName, opts...)
 
-		ctx.SetUserValue(otelParentSpanContext, c)
+		ctx.SetContext(c)
 
 		_ = ctx.AddLogFields(
-			zap.Field{Key: otelContextFieldKey, Type: zapcore.SkipType, Interface: c},
+			zap.Field{Key: otelContextFieldKey, Type: zapcore.SkipType, Interface: span.SpanContext()},
 			zap.String("span.id", span.SpanContext().SpanID().String()),
 			zap.String("trace.id", span.SpanContext().TraceID().String()),
 		)

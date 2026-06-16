@@ -48,8 +48,6 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
 
-	app.SetExtendedContext(&azugoContext{})
-
 	app.Use(middleware(opts...))
 
 	app.Instrumentation(instr(opts...))

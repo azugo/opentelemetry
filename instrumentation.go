@@ -99,6 +99,6 @@ func instr(opts ...Option) instrumenter.Instrumenter {
 			}
 		}
 
-		return func(_ error) {}
+		return instrumenter.NullFinish
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"go.opentelemetry.io/otel/log"
 	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -56,7 +57,7 @@ func (l *logDriver) With(fields []zapcore.Field) zapcore.Core {
 	cloned := l.clone()
 
 	if len(fields) > 0 {
-		ctx, attrbuf := convertLogField(fields)
+		ctx, attrbuf := l.convertLogField(fields)
 		if ctx != nil {
 			cloned.ctx = ctx
 		}
@@ -92,7 +93,7 @@ func (l *logDriver) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	emitCtx := l.ctx
 
 	if len(fields) > 0 {
-		ctx, attrbuf := convertLogField(fields)
+		ctx, attrbuf := l.convertLogField(fields)
 		if ctx != nil {
 			emitCtx = FromContext(ctx)
 		}
@@ -116,14 +117,14 @@ func (l *logDriver) Sync() error {
 	return nil
 }
 
-func convertLogField(fields []zapcore.Field) (context.Context, []log.KeyValue) {
+func (l *logDriver) convertLogField(fields []zapcore.Field) (context.Context, []log.KeyValue) {
 	var ctx context.Context
 
 	enc := newLogObjectEncoder(len(fields))
 	for _, field := range fields {
 		if field.Key == otelContextFieldKey {
-			if ctxFld, ok := field.Interface.(context.Context); ok {
-				ctx = ctxFld //nolint:fatcontext
+			if sc, ok := field.Interface.(trace.SpanContext); ok && sc.IsValid() {
+				ctx = trace.ContextWithSpanContext(l.ctx, sc)
 			}
 
 			continue
