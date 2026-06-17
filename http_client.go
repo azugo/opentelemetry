@@ -17,12 +17,16 @@ import (
 )
 
 func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool) {
-	c := FromContext(ctx)
-
 	req, resp, ok := http.InstrRequest(op, args...)
 	if !ok {
 		return nil, false
 	}
+
+	if !Recording(ctx) {
+		return nil, false
+	}
+
+	c := FromContext(ctx)
 
 	opts := []trace.SpanStartOption{
 		trace.WithAttributes(
@@ -56,13 +60,11 @@ func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator pro
 			span.SetAttributes(semconv.ErrorType(err))
 			span.RecordError(err, trace.WithStackTrace(true))
 			span.SetStatus(codes.Error, err.Error())
-			span.End()
-
-			return
+		} else {
+			span.SetAttributes(semconvutil.HTTPClientResponse(resp)...)
+			span.SetStatus(semconvutil.HTTPClientStatus(resp.StatusCode()))
 		}
 
-		span.SetAttributes(semconvutil.HTTPClientResponse(resp)...)
-		span.SetStatus(semconvutil.HTTPClientStatus(resp.StatusCode()))
-		span.End()
+		endSpan(ctx, span)
 	}, true
 }

@@ -24,3 +24,23 @@ func FromContext(ctx context.Context) context.Context {
 
 	return ctx
 }
+
+// Recording reports whether a span started for ctx would be part of active
+// tracing, and therefore eventually exported. Use it to guard custom
+// instrumentation so it does not emit orphan spans for untraced requests:
+//
+//	if opentelemetry.Recording(ctx) {
+//		ctx, span := tracer.Start(ctx, "my-operation")
+//		defer span.End()
+//		// ...
+//	}
+//
+// Outside of a request context it always returns true.
+func Recording(ctx context.Context) bool {
+	rc := azugo.RequestContext(ctx)
+	if rc == nil {
+		return true
+	}
+
+	return !rc.IsSkipRequestLog() && trace.SpanFromContext(ctx).SpanContext().IsValid()
+}

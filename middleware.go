@@ -24,10 +24,10 @@ const (
 
 const otelContextFieldKey = "__otelContext"
 
-// middleware sets up a handler to start tracing the incoming
-// requests.  The service parameter should describe the name of the
-// (virtual) server handling the request.
-func middleware(opts ...Option) func(azugo.RequestHandler) azugo.RequestHandler {
+// tracingMiddleware builds the middleware that starts a span for each incoming
+// request. The service parameter should describe the name of the (virtual)
+// server handling the request.
+func tracingMiddleware(opts ...Option) func(azugo.RequestHandler) azugo.RequestHandler {
 	cfg := traceConfig(opts...)
 
 	tracer := cfg.TracerProvider.Tracer(
@@ -76,8 +76,9 @@ func defaultRouteSpanNameFunc(ctx *azugo.Context, routeName string) string {
 // tracing of the request.
 func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 	return func(ctx *azugo.Context) {
-		if val, ok := ctx.UserValue("__log_request").(bool); !ok || !val {
-			// If the request is not to be logged, simply pass through to the handler
+		if ctx.IsSkipRequestLog() {
+			// Request logging/tracing was already disabled before reaching the
+			// tracing middleware — pass through without starting a span.
 			next(ctx)
 
 			return
@@ -118,6 +119,12 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 		spanName := tw.routeSpanNameFormatter(ctx, routeStr)
 		c, span := tw.tracer.Start(c, spanName, opts...)
 
+		// Subtrace spans created during this request (rate limiter, cache, HTTP
+		// client, ...) defer their End so they can be dropped together with the
+		// request if the handler opts out of tracing.
+		ds := &deferredSpans{}
+		ctx.SetUserValue(deferredUserValueKey, ds)
+
 		ctx.SetContext(c)
 
 		_ = ctx.AddLogFields(
@@ -127,6 +134,18 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 		)
 
 		next(ctx)
+
+		// The handler may disable request tracing only after the span was
+		// started (e.g. healthz via Context.SkipRequestLog). In that case drop
+		// the request span (by not ending it) together with all deferred
+		// subtrace spans, so none of them are exported.
+		if ctx.IsSkipRequestLog() {
+			ds.finalize(false)
+
+			return
+		}
+
+		ds.finalize(true)
 
 		status := ctx.Response().StatusCode()
 		if status > 0 {

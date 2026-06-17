@@ -47,6 +47,10 @@ func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPr
 		return nil, false
 	}
 
+	if !Recording(ctx) {
+		return nil, false
+	}
+
 	c := FromContext(ctx)
 
 	spanName := spfmt(ctx, op, args...)
@@ -72,6 +76,6 @@ func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPr
 			span.RecordError(err, trace.WithStackTrace(true))
 		}
 
-		span.End()
+		endSpan(ctx, span)
 	}, true
 }

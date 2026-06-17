@@ -15,6 +15,7 @@ import (
 	"azugo.io/azugo"
 	"azugo.io/core/cache"
 	"azugo.io/core/http"
+	"azugo.io/core/ratelimit"
 	"azugo.io/core/system"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -363,6 +364,16 @@ func traceConfig(opts ...Option) *otelcfg {
 			Name:     "cache",
 			Recorder: cacheRecorder,
 			Ops:      []string{cache.InstrumentationGet, cache.InstrumentationSet, cache.InstrumentationDelete},
+		},
+		instrRecorder{
+			Name:     "ratelimit",
+			Recorder: ratelimitRecorder,
+			Ops: []string{
+				ratelimit.InstrumentationAllow,
+				ratelimit.InstrumentationPeek,
+				ratelimit.InstrumentationWait,
+				ratelimit.InstrumentationReset,
+			},
 		},
 	)
 

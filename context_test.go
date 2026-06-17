@@ -55,7 +55,7 @@ func TestMiddlewareSpanPropagation(t *testing.T) {
 
 	app := azugo.NewTestApp()
 	app.Use(logRequest)
-	app.Use(middleware(TracerProvider(tp)))
+	app.Use(tracingMiddleware(TracerProvider(tp)))
 
 	app.Start(t)
 	defer app.Stop()
