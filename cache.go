@@ -51,8 +51,6 @@ func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPr
 		return nil, false
 	}
 
-	c := FromContext(ctx)
-
 	spanName := spfmt(ctx, op, args...)
 	if spanName == "" {
 		spanName = method + name
@@ -65,10 +63,8 @@ func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPr
 		trace.WithSpanKind(trace.SpanKindInternal),
 	}
 
-	//nolint:spancheck
-	_, span := tr.Start(c, spanName, opts...)
+	_, span := StartSpan(ctx, tr, spanName, opts...)
 
-	//nolint:spancheck
 	return func(err error) {
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
@@ -76,6 +72,6 @@ func cacheRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPr
 			span.RecordError(err, trace.WithStackTrace(true))
 		}
 
-		endSpan(ctx, span)
+		span.End()
 	}, true
 }

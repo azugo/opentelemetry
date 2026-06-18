@@ -375,6 +375,11 @@ func traceConfig(opts ...Option) *otelcfg {
 				ratelimit.InstrumentationReset,
 			},
 		},
+		instrRecorder{
+			Name:     "templ",
+			Recorder: renderRecorder,
+			Ops:      []string{templRenderOp},
+		},
 	)
 
 	return &cfg

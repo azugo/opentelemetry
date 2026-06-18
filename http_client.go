@@ -26,8 +26,6 @@ func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator pro
 		return nil, false
 	}
 
-	c := FromContext(ctx)
-
 	opts := []trace.SpanStartOption{
 		trace.WithAttributes(
 			semconvutil.HTTPClientRequest(req)...,
@@ -49,12 +47,10 @@ func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator pro
 		spanName = s.String()
 	}
 
-	//nolint:spancheck
-	c, span := tracer.Start(c, spanName, opts...)
+	c, span := StartSpan(ctx, tracer, spanName, opts...)
 
 	propagator.Inject(c, (*headerCarrier)(req))
 
-	//nolint:spancheck
 	return func(err error) {
 		if err != nil {
 			span.SetAttributes(semconv.ErrorType(err))
@@ -65,6 +61,6 @@ func httpClientRecorder(ctx context.Context, tracer trace.Tracer, propagator pro
 			span.SetStatus(semconvutil.HTTPClientStatus(resp.StatusCode()))
 		}
 
-		endSpan(ctx, span)
+		span.End()
 	}, true
 }

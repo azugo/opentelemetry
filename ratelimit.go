@@ -45,8 +45,6 @@ func ratelimitRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextM
 		return nil, false
 	}
 
-	c := FromContext(ctx)
-
 	spanName := spfmt(ctx, op, args...)
 	if spanName == "" {
 		spanName = method + key
@@ -59,10 +57,8 @@ func ratelimitRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextM
 		trace.WithSpanKind(trace.SpanKindInternal),
 	}
 
-	//nolint:spancheck
-	_, span := tr.Start(c, spanName, opts...)
+	_, span := StartSpan(ctx, tr, spanName, opts...)
 
-	//nolint:spancheck
 	return func(err error) {
 		if res != nil {
 			span.SetAttributes(
@@ -81,6 +77,6 @@ func ratelimitRecorder(ctx context.Context, tr trace.Tracer, _ propagation.TextM
 			span.RecordError(err, trace.WithStackTrace(true))
 		}
 
-		endSpan(ctx, span)
+		span.End()
 	}, true
 }
