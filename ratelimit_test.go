@@ -77,7 +77,7 @@ func TestRateLimitTracing(t *testing.T) {
 // TestRateLimitSkipInHandlerNoOrphan covers the healthz pattern: the request is
 // rate limited (so the limiter produces a span before the handler runs) and the
 // handler then calls SkipRequestLog. The deferred limiter span must be dropped
-// together with the request span — no orphan ALLOW span is exported.
+// together with the request span - no orphan ALLOW span is exported.
 func TestRateLimitSkipInHandlerNoOrphan(t *testing.T) {
 	sr := tracetest.NewSpanRecorder()
 	app := skipApp(t, sr)

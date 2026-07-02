@@ -78,7 +78,7 @@ func (tw traceware) handle(next azugo.RequestHandler) func(ctx *azugo.Context) {
 	return func(ctx *azugo.Context) {
 		if ctx.IsSkipRequestLog() {
 			// Request logging/tracing was already disabled before reaching the
-			// tracing middleware — pass through without starting a span.
+			// tracing middleware - pass through without starting a span.
 			next(ctx)
 
 			return

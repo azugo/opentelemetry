@@ -64,7 +64,7 @@ func TestTemplRenderTracing(t *testing.T) {
 
 // TestTemplRenderSkipInHandlerNoOrphan verifies deferral parity: a render that
 // happens before the handler calls SkipRequestLog is dropped together with the
-// request span — no orphan render span is exported.
+// request span - no orphan render span is exported.
 func TestTemplRenderSkipInHandlerNoOrphan(t *testing.T) {
 	sr := tracetest.NewSpanRecorder()
 	app := skipApp(t, sr)
