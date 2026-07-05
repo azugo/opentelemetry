@@ -65,7 +65,7 @@ type traceware struct {
 func defaultRouteSpanNameFunc(ctx *azugo.Context, routeName string) string {
 	var s strings.Builder
 
-	s.WriteString(ctx.Method())
+	s.WriteString(ctx.Method().String())
 	s.WriteByte(' ')
 	s.WriteString(routeName)
 

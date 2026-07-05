@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"azugo.io/azugo"
+	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
 	"github.com/valyala/fasthttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -83,13 +84,13 @@ func TestMiddlewareSpanPropagation(t *testing.T) {
 		txSpanMatches = gotSpan.SpanContext().IsValid() &&
 			gotSpan.SpanContext().TraceID() == handlerTraceID
 
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/test")
 	defer fasthttp.ReleaseResponse(resp)
 	qt.Assert(t, qt.IsNil(err))
-	qt.Check(t, qt.Equals(resp.StatusCode(), fasthttp.StatusNoContent))
+	qt.Check(t, qt.Equals(resp.StatusCode(), http.StatusNoContent))
 
 	qt.Check(t, qt.IsTrue(spanValid))
 	qt.Check(t, qt.IsTrue(reqCtxMatches))

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"azugo.io/azugo"
+	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
 	"github.com/valyala/fasthttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -33,7 +34,7 @@ func TestTemplRenderTracing(t *testing.T) {
 
 	app.Get("/page", func(ctx *azugo.Context) {
 		emitRender(ctx, "home.page")
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/page")
@@ -75,7 +76,7 @@ func TestTemplRenderSkipInHandlerNoOrphan(t *testing.T) {
 	app.Get("/healthz", func(ctx *azugo.Context) {
 		emitRender(ctx, "home.page")
 		ctx.SkipRequestLog()
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/healthz")

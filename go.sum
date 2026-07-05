@@ -1,7 +1,7 @@
-azugo.io/azugo v0.34.3 h1:761krTSQuEb0qrlGJaokxMH6XbzvV0D/pQSV4k7nVuw=
-azugo.io/azugo v0.34.3/go.mod h1:6FwWHqCVa/pTe+hBLfkyf/uUSdFCA8uA/PHHugBZL34=
-azugo.io/core v0.34.1 h1:P17kCXhfJMRqYuUtkfOEn1wF4NEq0FlvKE7wuiRtQH4=
-azugo.io/core v0.34.1/go.mod h1:nDRteoCQPtLq8FTUjC7d8F+BZalOUxiAtk+M4IAG8vk=
+azugo.io/azugo v0.35.0 h1:AJO2NwyCCPdu7Hw27PvS+U6ShW49aVbbEjEbs/Jyb8Y=
+azugo.io/azugo v0.35.0/go.mod h1:/lt13dCOh5d4fkl407MNVcwXIdoMTwIFaAjlAmv+igg=
+azugo.io/core v0.35.1 h1:xI6dohYT+7uMZ055WCJFEdq0A5BjdTJWW6F8VEjewHE=
+azugo.io/core v0.35.1/go.mod h1:nDRteoCQPtLq8FTUjC7d8F+BZalOUxiAtk+M4IAG8vk=
 github.com/VictoriaMetrics/metrics v1.44.0 h1:Fr8yqQSV+ZfYaDD/anqk1E8e9YPgfleSleJmAI0M0Tw=
 github.com/VictoriaMetrics/metrics v1.44.0/go.mod h1:xDM82ULLYCYdFRgQ2JBxi8Uf1+8En1So9YUwlGTOqTc=
 github.com/andybalholm/brotli v1.2.1 h1:R+f5xP285VArJDRgowrfb9DqL18yVK0gKAW/F+eTWro=

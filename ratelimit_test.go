@@ -9,6 +9,7 @@ import (
 	"azugo.io/azugo"
 	"azugo.io/azugo/config"
 	"azugo.io/azugo/middleware"
+	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
 	"github.com/valyala/fasthttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -38,13 +39,13 @@ func TestRateLimitTracing(t *testing.T) {
 	defer app.Stop()
 
 	app.Get("/work", func(ctx *azugo.Context) {
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/work")
 	defer fasthttp.ReleaseResponse(resp)
 	qt.Assert(t, qt.IsNil(err))
-	qt.Check(t, qt.Equals(resp.StatusCode(), fasthttp.StatusNoContent))
+	qt.Check(t, qt.Equals(resp.StatusCode(), http.StatusNoContent))
 
 	ended := sr.Ended()
 	qt.Assert(t, qt.HasLen(ended, 2))
@@ -89,7 +90,7 @@ func TestRateLimitSkipInHandlerNoOrphan(t *testing.T) {
 	app.Get("/healthz", func(ctx *azugo.Context) {
 		// Runs after the rate limiter already performed its Allow check.
 		ctx.SkipRequestLog()
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/healthz")
@@ -145,7 +146,7 @@ func TestGlobalRateLimitTracing(t *testing.T) {
 	defer app.Stop()
 
 	app.Get("/work", func(ctx *azugo.Context) {
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/work")
@@ -192,7 +193,7 @@ func TestRateLimitTracingSkipped(t *testing.T) {
 	defer app.Stop()
 
 	app.Get("/healthz", func(ctx *azugo.Context) {
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/healthz")

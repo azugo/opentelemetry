@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"azugo.io/azugo"
+	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
 	"github.com/valyala/fasthttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -41,7 +42,7 @@ func TestStartSpanChild(t *testing.T) {
 		_, span := StartSpan(ctx, tr, "custom")
 		span.End()
 
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/work")
@@ -80,7 +81,7 @@ func TestStartSpanSkipDrops(t *testing.T) {
 		span.End()
 
 		ctx.SkipRequestLog()
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/healthz")

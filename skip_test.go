@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"azugo.io/azugo"
+	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
 	"github.com/valyala/fasthttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -50,13 +51,13 @@ func TestSkipRequestLogInHandlerDropsTrace(t *testing.T) {
 		// A subtrace that would otherwise be recorded as a child span.
 		_, _ = ctx.HTTPClient().Get(unreachableUpstream)
 
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/healthz")
 	defer fasthttp.ReleaseResponse(resp)
 	qt.Assert(t, qt.IsNil(err))
-	qt.Check(t, qt.Equals(resp.StatusCode(), fasthttp.StatusNoContent))
+	qt.Check(t, qt.Equals(resp.StatusCode(), http.StatusNoContent))
 
 	qt.Check(t, qt.HasLen(sr.Ended(), 0))
 }
@@ -80,7 +81,7 @@ func TestSkipRequestLogBeforeMiddlewareDropsTrace(t *testing.T) {
 
 	app.Get("/skip", func(ctx *azugo.Context) {
 		_, _ = ctx.HTTPClient().Get(unreachableUpstream)
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/skip")
@@ -101,7 +102,7 @@ func TestFilterDropsTraceAndSubtraces(t *testing.T) {
 
 	app.Get("/filtered", func(ctx *azugo.Context) {
 		_, _ = ctx.HTTPClient().Get(unreachableUpstream)
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/filtered")
@@ -132,7 +133,7 @@ func TestRecording(t *testing.T) {
 		// Disabled after the fact via SkipRequestLog.
 		skipped = Recording(ctx)
 
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/r")
@@ -155,7 +156,7 @@ func TestTracedRequestRecordsServerAndSubtrace(t *testing.T) {
 
 	app.Get("/work", func(ctx *azugo.Context) {
 		_, _ = ctx.HTTPClient().Get(unreachableUpstream)
-		ctx.StatusCode(fasthttp.StatusNoContent)
+		ctx.StatusCode(http.StatusNoContent)
 	})
 
 	resp, err := app.TestClient().Get("/work")

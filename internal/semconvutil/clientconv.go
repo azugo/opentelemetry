@@ -193,7 +193,7 @@ func (c *clientConv) ClientRequest(req *http.Request) []attribute.KeyValue {
 
 func (c *clientConv) method(method string) attribute.KeyValue {
 	if method == "" {
-		return c.HTTPRequestMethodKey.String(fasthttp.MethodGet)
+		return c.HTTPRequestMethodKey.String(http.MethodGet.String())
 	}
 
 	return c.HTTPRequestMethodKey.String(method)

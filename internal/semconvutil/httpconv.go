@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"azugo.io/azugo"
-	"github.com/valyala/fasthttp"
+	"azugo.io/core/http"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
@@ -182,7 +182,7 @@ func (c *httpConv) ServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n)
 
-	attrs = append(attrs, c.method(ctx.Method()))
+	attrs = append(attrs, c.method(ctx.Method().String()))
 	attrs = append(attrs, c.scheme(ctx.IsTLS()))
 	attrs = append(attrs, c.NetConv.ServerAddress(host))
 
@@ -234,7 +234,7 @@ func (c *httpConv) ServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 func (c *httpConv) method(method string) attribute.KeyValue {
 	if method == "" {
-		return c.HTTPRequestMethodKey.String(fasthttp.MethodGet)
+		return c.HTTPRequestMethodKey.String(http.MethodGet.String())
 	}
 
 	return c.HTTPRequestMethodKey.String(method)

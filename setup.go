@@ -189,7 +189,7 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 
 	if config.ElasticAPMSecretToken != "" {
 		opt = append(opt, otlptracehttp.WithHeaders(map[string]string{
-			"Authorization": "ApiKey " + config.ElasticAPMSecretToken,
+			http.HeaderAuthorization: "ApiKey " + config.ElasticAPMSecretToken,
 		}))
 	}
 
@@ -286,7 +286,7 @@ func newLogProvider(app *azugo.App, config *Configuration) (*log.LoggerProvider,
 
 	if config.ElasticAPMSecretToken != "" {
 		opt = append(opt, otlploghttp.WithHeaders(map[string]string{
-			"Authorization": "ApiKey " + config.ElasticAPMSecretToken,
+			http.HeaderAuthorization: "ApiKey " + config.ElasticAPMSecretToken,
 		}))
 	}
 
