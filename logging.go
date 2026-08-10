@@ -7,6 +7,7 @@ import (
 	"context"
 	"slices"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/log"
 	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
 	"go.opentelemetry.io/otel/trace"
@@ -17,7 +18,7 @@ type logDriver struct {
 	provider log.LoggerProvider
 	logger   log.Logger
 	opts     []log.LoggerOption
-	attr     []log.KeyValue
+	attr     []attribute.KeyValue
 	ctx      context.Context
 	minLevel zapcore.Level
 }
@@ -72,7 +73,7 @@ func (l *logDriver) With(fields []zapcore.Field) zapcore.Core {
 func (l *logDriver) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	r := log.Record{}
 	r.SetTimestamp(ent.Time)
-	r.SetBody(log.StringValue(ent.Message))
+	r.SetBody(attribute.StringValue(ent.Message))
 	r.SetSeverity(convertLogLevel(ent.Level))
 	r.SetSeverityText(ent.Level.String())
 
@@ -80,14 +81,14 @@ func (l *logDriver) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 
 	if ent.Caller.Defined {
 		r.AddAttributes(
-			log.String(string(semconv.CodeFilePathKey), ent.Caller.File),
-			log.Int(string(semconv.CodeLineNumberKey), ent.Caller.Line),
-			log.String(string(semconv.CodeFunctionNameKey), ent.Caller.Function),
+			attribute.String(string(semconv.CodeFilePathKey), ent.Caller.File),
+			attribute.Int(string(semconv.CodeLineNumberKey), ent.Caller.Line),
+			attribute.String(string(semconv.CodeFunctionNameKey), ent.Caller.Function),
 		)
 	}
 
 	if ent.Stack != "" {
-		r.AddAttributes(log.String(string(semconv.CodeStacktraceKey), ent.Stack))
+		r.AddAttributes(attribute.String(string(semconv.CodeStacktraceKey), ent.Stack))
 	}
 
 	emitCtx := l.ctx
@@ -117,7 +118,7 @@ func (l *logDriver) Sync() error {
 	return nil
 }
 
-func (l *logDriver) convertLogField(fields []zapcore.Field) (context.Context, []log.KeyValue) {
+func (l *logDriver) convertLogField(fields []zapcore.Field) (context.Context, []attribute.KeyValue) {
 	var (
 		ctx     context.Context
 		spanCtx trace.SpanContext
