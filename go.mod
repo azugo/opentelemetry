@@ -1,6 +1,6 @@
 module azugo.io/opentelemetry
 
-go 1.26.5
+go 1.25.0
 
 require (
 	azugo.io/azugo v0.36.1
