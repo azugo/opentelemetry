@@ -38,6 +38,7 @@ span := trace.SpanFromContext(opentelemetry.FromContext(ctx))
 ### Default
 
 * `OTEL_EXPORTER_OTLP_ENDPOINT` - OpenTelemetry server endpoint address. If endpoint is not provided tracing will be disabled.
+* `OTEL_EXPORTER_OTLP_PROTOCOL` - OTLP transport protocol (defaults to `http/protobuf`, allowed values are `http/protobuf` and `grpc`). For `grpc` the endpoint scheme selects channel security: `http://` is insecure, `https://` uses TLS.
 * `OTEL_SERVICE_NAME` - Override default service name defined in Azugo app.
 
 For other configuration environment variables see [OpenTelemetry documentation](https://opentelemetry.io/docs/languages/sdk-configuration/).
