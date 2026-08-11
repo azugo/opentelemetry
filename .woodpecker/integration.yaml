@@ -1,0 +1,71 @@
+when:
+  branch:
+    - main
+  event:
+    - push
+    - pull_request
+
+steps:
+  - name: otelcol
+    image: otel/opentelemetry-collector:0.109.0
+    pull: true
+    detach: true
+    entrypoint: ["/otelcol", "--config=env:OTELCOL_CONFIG"]
+    environment:
+      OTELCOL_CONFIG: |
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: 0.0.0.0:4318
+              grpc:
+                endpoint: 0.0.0.0:4317
+        exporters:
+          debug: {}
+        service:
+          telemetry:
+            metrics:
+              address: 0.0.0.0:8888
+          pipelines:
+            traces:
+              receivers: [otlp]
+              exporters: [debug]
+            metrics:
+              receivers: [otlp]
+              exporters: [debug]
+            logs:
+              receivers: [otlp]
+              exporters: [debug]
+
+  - name: check-service
+    image: alpine:3
+    pull: true
+    depends_on:
+      - otelcol
+    commands:
+      - timeout 60 sh -c 'until nc -z otelcol 4318 && nc -z otelcol 4317; do sleep 1; done'
+
+  - name: test-http
+    image: golang:1.26-alpine
+    pull: true
+    depends_on:
+      - check-service
+    environment:
+      CGO_ENABLED: 0
+      OTEL_TEST_ENDPOINT: http://otelcol:4318
+      OTEL_TEST_TELEMETRY: http://otelcol:8888/metrics
+    commands:
+      - go test -count=1 -v -run TestOTLPIntegration .
+
+  - name: test-grpc
+    image: golang:1.26-alpine
+    pull: true
+    depends_on:
+      - check-service
+    environment:
+      CGO_ENABLED: 0
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TEST_ENDPOINT: http://otelcol:4317
+      OTEL_TEST_TELEMETRY: http://otelcol:8888/metrics
+    commands:
+      - go test -count=1 -v -run TestOTLPIntegration .

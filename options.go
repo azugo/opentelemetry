@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"azugo.io/azugo"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -14,6 +15,7 @@ import (
 // otelcfg is used to configure the mux middleware.
 type otelcfg struct {
 	TracerProvider         trace.TracerProvider
+	MeterProvider          metric.MeterProvider
 	Propagators            propagation.TextMapPropagator
 	routeSpanNameFormatter RouteSpanNameFormatter
 	instrSpanNameFormatter InstrumentationSpanNameFormatter
@@ -84,6 +86,16 @@ func TracerProvider(provider trace.TracerProvider) Option {
 	return optionFunc(func(cfg *otelcfg) {
 		if provider != nil {
 			cfg.TracerProvider = provider
+		}
+	})
+}
+
+// MeterProvider specifies a meter provider to use for creating metric
+// instruments. If none is specified, the global provider is used.
+func MeterProvider(provider metric.MeterProvider) Option {
+	return optionFunc(func(cfg *otelcfg) {
+		if provider != nil {
+			cfg.MeterProvider = provider
 		}
 	})
 }

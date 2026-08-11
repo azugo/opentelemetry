@@ -14,7 +14,7 @@ import (
 
 // Use OpenTelemetry for tracing in Azugo application.
 func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, error) {
-	shutdownFns := make([]func(context.Context) error, 0, 2)
+	shutdownFns := make([]func(context.Context) error, 0, 3)
 
 	if config == nil {
 		config = &Configuration{}
@@ -39,6 +39,13 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 
 	shutdownFns = append(shutdownFns, logProvider.Shutdown)
 
+	meterProvider, err := newMeterProvider(app, config)
+	if err != nil {
+		return nil, err
+	}
+
+	shutdownFns = append(shutdownFns, meterProvider.Shutdown)
+
 	// Register the otel log driver backed by this app's log provider (not the global one).
 	core.RegisterLogDriver("otel", func(a *core.App, _, _ string, level zapcore.Level) (zapcore.Core, error) {
 		return newLogCore(a.BackgroundContext(), logProvider, a.AppName, level), nil
@@ -47,6 +54,7 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	// Set the global OTEL providers
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
+	otel.SetMeterProvider(meterProvider)
 
 	app.UsePriority(tracingMiddleware(opts...))
 
