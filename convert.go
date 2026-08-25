@@ -103,7 +103,7 @@ func convertValue(v any) attribute.Value {
 		}
 
 		return attribute.MapValue(kvs...)
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Pointer, reflect.Interface:
 		if val.IsNil() {
 			return attribute.Value{}
 		}

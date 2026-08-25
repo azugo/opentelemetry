@@ -10,7 +10,7 @@ import (
 	"azugo.io/core/http"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
 
 // HTTPServerRequest returns trace attributes for an HTTP request received by a
@@ -36,77 +36,6 @@ import (
 // "network.peer.port", "user_agent.original", "client.address",
 // "network.protocol.name", "network.protocol.version".
 func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
-	return hc.ServerRequest(ctx)
-}
-
-// HTTPServerStatus returns a span status code and message for an HTTP status code
-// value returned by a server. Status codes in the 400-499 range are not
-// returned as errors.
-func HTTPServerStatus(code int) (codes.Code, string) {
-	return hc.ServerStatus(code)
-}
-
-// HTTPClientStatus returns a span status code and message for an HTTP status code
-// value returned by a server to a client request. Status codes in the 4xx and
-// 5xx ranges are returned as errors.
-func HTTPClientStatus(code int) (codes.Code, string) {
-	return hc.ClientStatus(code)
-}
-
-// httpConv are the HTTP semantic convention attributes defined for a version
-// of the OpenTelemetry specification.
-type httpConv struct {
-	NetConv *netConv
-
-	HTTPRequestMethodKey attribute.Key
-	// HTTPRequestContentLengthKey  attribute.Key
-	// HTTPResponseContentLengthKey attribute.Key
-	HTTPRouteKey              attribute.Key
-	URLSchemeHTTP             attribute.KeyValue
-	URLSchemeHTTPS            attribute.KeyValue
-	HTTPResponseStatusCodeKey attribute.Key
-	URLPathKey                attribute.Key
-	URLFullKey                attribute.Key
-	UserAgentOriginalKey      attribute.Key
-}
-
-var hc = &httpConv{
-	NetConv: nc,
-
-	HTTPRequestMethodKey: semconv.HTTPRequestMethodKey,
-	// HTTPRequestContentLengthKey:  semconv.HTTPRequestContentLengthKey,
-	// HTTPResponseContentLengthKey: semconv.HTTPResponseContentLengthKey,
-	HTTPRouteKey:              semconv.HTTPRouteKey,
-	URLSchemeHTTP:             semconv.URLScheme("http"),
-	URLSchemeHTTPS:            semconv.URLScheme("https"),
-	HTTPResponseStatusCodeKey: semconv.HTTPResponseStatusCodeKey,
-	URLPathKey:                semconv.URLPathKey,
-	URLFullKey:                semconv.URLFullKey,
-	UserAgentOriginalKey:      semconv.UserAgentOriginalKey,
-}
-
-// ServerRequest returns attributes for an HTTP request received by a server.
-//
-// The server must be the primary server name if it is known. For example this
-// would be the ServerName directive
-// (https://httpd.apache.org/docs/2.4/mod/core.html#servername) for an Apache
-// server, and the server_name directive
-// (http://nginx.org/en/docs/http/ngx_http_core_module.html#server_name) for an
-// nginx server. More generically, the primary server name would be the host
-// header value that matches the default virtual host of an HTTP server. It
-// should include the host identifier and if a port is used to route to the
-// server that port identifier should be included as an appropriate port
-// suffix.
-//
-// If the primary server name is not known, server should be an empty string.
-// The req Host will be used to determine the server instead.
-//
-// The following attributes are always returned: "http.request.method", "url.scheme",
-// "url.path", "url.full", "server.address". The following attributes are returned if they
-// related values are defined in req: "server.port", "network.peer.address",
-// "network.peer.port", "user_agent.original", "client.address",
-// "network.protocol.name", "network.protocol.version".
-func (c *httpConv) ServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 	/*
 		The following semantic conventions are returned if present:
 		http.request.method        string
@@ -182,12 +111,12 @@ func (c *httpConv) ServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n)
 
-	attrs = append(attrs, c.method(ctx.Method().String()))
-	attrs = append(attrs, c.scheme(ctx.IsTLS()))
-	attrs = append(attrs, c.NetConv.ServerAddress(host))
+	attrs = append(attrs, httpRequestMethodAttr(ctx.Method().String()))
+	attrs = append(attrs, httpSchemeAttr(ctx.IsTLS()))
+	attrs = append(attrs, semconv.ServerAddress(host))
 
 	if hostPort > 0 {
-		attrs = append(attrs, c.NetConv.ServerPort(hostPort))
+		attrs = append(attrs, semconv.ServerPort(hostPort))
 	}
 
 	if user != nil && user.Authorized() {
@@ -199,53 +128,83 @@ func (c *httpConv) ServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 	if peer != "" {
 		// The Go HTTP server sets RemoteAddr to "IP:port", this will not be a
 		// file-path that would be interpreted with a sock family.
-		attrs = append(attrs, c.NetConv.NetworkPeerAddress(peer))
+		attrs = append(attrs, semconv.NetworkPeerAddress(peer))
 		if peerPort > 0 {
-			attrs = append(attrs, c.NetConv.NetworkPeerPort(peerPort))
+			attrs = append(attrs, semconv.NetworkPeerPort(peerPort))
 		}
 	}
 
 	if useragent != "" {
-		attrs = append(attrs, c.UserAgentOriginalKey.String(useragent))
+		attrs = append(attrs, semconv.UserAgentOriginal(useragent))
 	}
 
 	if clientIP != "" {
-		attrs = append(attrs, c.NetConv.ClientAddress(clientIP))
+		attrs = append(attrs, semconv.ClientAddress(clientIP))
 	}
 
 	if target != "" {
-		attrs = append(attrs, c.URLPathKey.String(target))
+		attrs = append(attrs, semconv.URLPath(target))
 	}
 
 	if fullURL != "" {
-		attrs = append(attrs, c.URLFullKey.String(fullURL))
+		attrs = append(attrs, semconv.URLFull(fullURL))
 	}
 
 	if protoName != "" && protoName != "http" {
-		attrs = append(attrs, c.NetConv.NetworkProtocolName.String(protoName))
+		attrs = append(attrs, semconv.NetworkProtocolName(protoName))
 	}
 
 	if protoVersion != "" {
-		attrs = append(attrs, c.NetConv.NetworkProtocolVersion.String(protoVersion))
+		attrs = append(attrs, semconv.NetworkProtocolVersion(protoVersion))
 	}
 
 	return attrs
 }
 
-func (c *httpConv) method(method string) attribute.KeyValue {
-	if method == "" {
-		return c.HTTPRequestMethodKey.String(http.MethodGet.String())
+// HTTPServerStatus returns a span status code and message for an HTTP status code
+// value returned by a server. Status codes in the 400-499 range are not
+// returned as errors.
+func HTTPServerStatus(code int) (codes.Code, string) {
+	if code < 100 || code >= 600 {
+		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
 	}
 
-	return c.HTTPRequestMethodKey.String(method)
+	if code >= 500 {
+		return codes.Error, ""
+	}
+
+	return codes.Unset, ""
 }
 
-func (c *httpConv) scheme(https bool) attribute.KeyValue {
-	if https {
-		return c.URLSchemeHTTPS
+// HTTPClientStatus returns a span status code and message for an HTTP status code
+// value returned by a server to a client request. Status codes in the 4xx and
+// 5xx ranges are returned as errors.
+func HTTPClientStatus(code int) (codes.Code, string) {
+	if code < 100 || code >= 600 {
+		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
 	}
 
-	return c.URLSchemeHTTP
+	if code >= 400 {
+		return codes.Error, ""
+	}
+
+	return codes.Unset, ""
+}
+
+func httpRequestMethodAttr(method string) attribute.KeyValue {
+	if method == "" {
+		return semconv.HTTPRequestMethodKey.String(http.MethodGet.String())
+	}
+
+	return semconv.HTTPRequestMethodKey.String(method)
+}
+
+func httpSchemeAttr(https bool) attribute.KeyValue {
+	if https {
+		return semconv.URLScheme("https")
+	}
+
+	return semconv.URLScheme("http")
 }
 
 func requiredHTTPPort(https bool, port int) int {
@@ -260,34 +219,4 @@ func requiredHTTPPort(https bool, port int) int {
 	}
 
 	return -1
-}
-
-// ServerStatus returns a span status code and message for an HTTP status code
-// value returned by a server. Status codes in the 400-499 range are not
-// returned as errors.
-func (c *httpConv) ServerStatus(code int) (codes.Code, string) {
-	if code < 100 || code >= 600 {
-		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
-	}
-
-	if code >= 500 {
-		return codes.Error, ""
-	}
-
-	return codes.Unset, ""
-}
-
-// ClientStatus returns a span status code and message for an HTTP status code
-// value returned by a server to a client request. Status codes in the 4xx and
-// 5xx ranges are returned as errors.
-func (c *httpConv) ClientStatus(code int) (codes.Code, string) {
-	if code < 100 || code >= 600 {
-		return codes.Error, fmt.Sprintf("Invalid HTTP status code %d", code)
-	}
-
-	if code >= 400 {
-		return codes.Error, ""
-	}
-
-	return codes.Unset, ""
 }

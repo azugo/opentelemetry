@@ -6,12 +6,13 @@ package semconvutil
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 
 	"azugo.io/core/http"
 	"github.com/valyala/fasthttp"
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.41.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
 
 var (
@@ -26,73 +27,6 @@ var (
 // "network.transport". The following attributes are returned if they
 // related values are defined in req: "server.port", "user_agent.original".
 func HTTPClientRequest(req *http.Request) []attribute.KeyValue {
-	return cc.ClientRequest(req)
-}
-
-// HTTPClientResponse returns attributes for an HTTP response received by client.
-//
-// The following attributes are always returned: "http.response.status_code".
-func HTTPClientResponse(resp *http.Response) []attribute.KeyValue {
-	return cc.ClientResponse(resp)
-}
-
-// httpConv are the HTTP semantic convention attributes defined for a version
-// of the OpenTelemetry specification.
-type clientConv struct {
-	NetConv *netConv
-
-	redactedHeaders map[string]struct{}
-
-	ServerAddressKey                   attribute.Key
-	ServerPortKey                      attribute.Key
-	HTTPRequestMethodKey               attribute.Key
-	URLFullKey                         attribute.Key
-	URLSchemeHTTP                      attribute.KeyValue
-	URLSchemeHTTPS                     attribute.KeyValue
-	UserAgentOriginalKey               attribute.Key
-	NetworkTransportTCP                attribute.KeyValue
-	NetworkProtocolNameHTTP            attribute.KeyValue
-	NetworkProtocolVersion11           attribute.KeyValue
-	UserAgentNameKey                   attribute.Key
-	HTTPRequestHeaderContentLengthKey  attribute.Key
-	HTTPResponseStatusCodeKey          attribute.Key
-	HTTPResponseHeaderContentLengthKey attribute.Key
-}
-
-var cc = &clientConv{
-	NetConv: nc,
-
-	redactedHeaders: map[string]struct{}{
-		"authorization":       {},
-		"www-authenticate":    {},
-		"x-api-key":           {},
-		"proxy-authenticate":  {},
-		"proxy-authorization": {},
-		"cookie":              {},
-		"set-cookie":          {},
-	},
-
-	HTTPRequestMethodKey:               semconv.HTTPRequestMethodKey,
-	URLFullKey:                         semconv.URLFullKey,
-	URLSchemeHTTP:                      semconv.URLScheme("http"),
-	URLSchemeHTTPS:                     semconv.URLScheme("https"),
-	UserAgentOriginalKey:               semconv.UserAgentOriginalKey,
-	NetworkTransportTCP:                semconv.NetworkTransportTCP,
-	NetworkProtocolNameHTTP:            semconv.NetworkProtocolName("http"),
-	NetworkProtocolVersion11:           semconv.NetworkProtocolVersion("1.1"),
-	UserAgentNameKey:                   semconv.UserAgentNameKey,
-	HTTPRequestHeaderContentLengthKey:  attribute.Key("http.request.header.content-length"),
-	HTTPResponseStatusCodeKey:          semconv.HTTPResponseStatusCodeKey,
-	HTTPResponseHeaderContentLengthKey: attribute.Key("http.response.header.content-length"),
-}
-
-// ClientRequest returns attributes for an HTTP request sent by client.
-//
-// The following attributes are always returned: "http.request.method", "url.scheme",
-// "url.full", "server.address", "network.protocol.name", "network.protocol.version",
-// "network.transport". The following attributes are returned if they
-// related values are defined in req: "server.port", "user_agent.original".
-func (c *clientConv) ClientRequest(req *http.Request) []attribute.KeyValue {
 	/*
 		The following semantic conventions are returned if present:
 		http.request.method        string
@@ -152,25 +86,25 @@ func (c *clientConv) ClientRequest(req *http.Request) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n+req.Header.Len())
 
-	attrs = append(attrs, c.method(string(req.Header.Method())))
-	attrs = append(attrs, c.scheme(isTLS))
-	attrs = append(attrs, c.NetConv.ServerAddress(host))
-	attrs = append(attrs, c.URLFullKey.String(uri.String()))
+	attrs = append(attrs, httpRequestMethodAttr(string(req.Header.Method())))
+	attrs = append(attrs, httpSchemeAttr(isTLS))
+	attrs = append(attrs, semconv.ServerAddress(host))
+	attrs = append(attrs, semconv.URLFull(uri.String()))
 	// HTTP client supports only HTTP/1.1 over TCP.
-	attrs = append(attrs, c.NetworkTransportTCP)
-	attrs = append(attrs, c.NetworkProtocolNameHTTP)
-	attrs = append(attrs, c.NetworkProtocolVersion11)
+	attrs = append(attrs, semconv.NetworkTransportTCP)
+	attrs = append(attrs, semconv.NetworkProtocolName("http"))
+	attrs = append(attrs, semconv.NetworkProtocolVersion("1.1"))
 
 	if hostPort > 0 {
-		attrs = append(attrs, c.NetConv.ServerPort(hostPort))
+		attrs = append(attrs, semconv.ServerPort(hostPort))
 	}
 
 	if useragent != "" {
-		attrs = append(attrs, c.UserAgentOriginalKey.String(useragent))
+		attrs = append(attrs, semconv.UserAgentOriginal(useragent))
 	}
 
 	if contentLen > 0 {
-		attrs = append(attrs, c.HTTPRequestHeaderContentLengthKey.Int(contentLen))
+		attrs = append(attrs, semconv.HTTPRequestHeader("content-length", strconv.Itoa(contentLen)))
 	}
 
 	for k, v := range req.Header.All() {
@@ -181,36 +115,20 @@ func (c *clientConv) ClientRequest(req *http.Request) []attribute.KeyValue {
 		}
 
 		val := string(v)
-		if _, ok := c.redactedHeaders[key]; ok {
+		if _, ok := redactedHeaders[key]; ok {
 			val = redactedHeaderValue
 		}
 
-		attrs = append(attrs, attribute.String("http.request.header."+key, val))
+		attrs = append(attrs, semconv.HTTPRequestHeader(key, val))
 	}
 
 	return attrs
 }
 
-func (c *clientConv) method(method string) attribute.KeyValue {
-	if method == "" {
-		return c.HTTPRequestMethodKey.String(http.MethodGet.String())
-	}
-
-	return c.HTTPRequestMethodKey.String(method)
-}
-
-func (c *clientConv) scheme(https bool) attribute.KeyValue {
-	if https {
-		return c.URLSchemeHTTPS
-	}
-
-	return c.URLSchemeHTTP
-}
-
-// ClientResponse returns attributes for an HTTP response received by client.
+// HTTPClientResponse returns attributes for an HTTP response received by client.
 //
 // The following attributes are always returned: "http.response.status_code".
-func (c *clientConv) ClientResponse(resp *http.Response) []attribute.KeyValue {
+func HTTPClientResponse(resp *http.Response) []attribute.KeyValue {
 	n := 1 // Response status code.
 
 	contentLen := resp.Header.ContentLength()
@@ -220,10 +138,10 @@ func (c *clientConv) ClientResponse(resp *http.Response) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n+resp.Header.Len())
 
-	attrs = append(attrs, c.HTTPResponseStatusCodeKey.Int(resp.StatusCode()))
+	attrs = append(attrs, semconv.HTTPResponseStatusCode(resp.StatusCode()))
 
 	if contentLen > 0 {
-		attrs = append(attrs, c.HTTPResponseHeaderContentLengthKey.Int(contentLen))
+		attrs = append(attrs, semconv.HTTPResponseHeader("content-length", strconv.Itoa(contentLen)))
 	}
 
 	for k, v := range resp.Header.All() {
@@ -235,12 +153,22 @@ func (c *clientConv) ClientResponse(resp *http.Response) []attribute.KeyValue {
 		}
 
 		val := string(v)
-		if _, ok := c.redactedHeaders[key]; ok {
+		if _, ok := redactedHeaders[key]; ok {
 			val = redactedHeaderValue
 		}
 
-		attrs = append(attrs, attribute.String("http.response.header."+key, val))
+		attrs = append(attrs, semconv.HTTPResponseHeader(key, val))
 	}
 
 	return attrs
+}
+
+var redactedHeaders = map[string]struct{}{
+	"authorization":       {},
+	"www-authenticate":    {},
+	"x-api-key":           {},
+	"proxy-authenticate":  {},
+	"proxy-authorization": {},
+	"cookie":              {},
+	"set-cookie":          {},
 }

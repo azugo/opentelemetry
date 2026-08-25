@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kr/pretty"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
 
 const (
@@ -48,27 +49,27 @@ func TestServer(t *testing.T) {
 	testAddrs(t, []addrTest{
 		{address: "", expected: nil},
 		{address: "192.0.0.1", expected: []attribute.KeyValue{
-			nc.ServerAddress("192.0.0.1"),
+			semconv.ServerAddress("192.0.0.1"),
 		}},
 		{address: "192.0.0.1:9090", expected: []attribute.KeyValue{
-			nc.ServerAddress("192.0.0.1"),
-			nc.ServerPort(9090),
+			semconv.ServerAddress("192.0.0.1"),
+			semconv.ServerPort(9090),
 		}},
-	}, nc.server)
+	}, netServerAttrs)
 }
 
 func TestServerAddress(t *testing.T) {
 	t.Parallel()
 
 	expected := attribute.Key("server.address").String(addr)
-	qt.Check(t, qt.Equals(nc.ServerAddress(addr), expected))
+	qt.Check(t, qt.Equals(semconv.ServerAddress(addr), expected))
 }
 
 func TestServerPort(t *testing.T) {
 	t.Parallel()
 
 	expected := attribute.Key("server.port").Int(port)
-	qt.Check(t, qt.Equals(nc.ServerPort(port), expected))
+	qt.Check(t, qt.Equals(semconv.ServerPort(port), expected))
 }
 
 func TestNetworkPeer(t *testing.T) {
@@ -77,34 +78,34 @@ func TestNetworkPeer(t *testing.T) {
 	testAddrs(t, []addrTest{
 		{address: "", expected: nil},
 		{address: "example.com", expected: []attribute.KeyValue{
-			nc.NetworkPeerAddress("example.com"),
+			semconv.NetworkPeerAddress("example.com"),
 		}},
 		{address: "/tmp/file", expected: []attribute.KeyValue{
-			nc.NetworkPeerAddress("/tmp/file"),
+			semconv.NetworkPeerAddress("/tmp/file"),
 		}},
 		{address: "192.0.0.1", expected: []attribute.KeyValue{
-			nc.NetworkPeerAddress("192.0.0.1"),
+			semconv.NetworkPeerAddress("192.0.0.1"),
 		}},
 		{address: ":9090", expected: nil},
 		{address: "192.0.0.1:9090", expected: []attribute.KeyValue{
-			nc.NetworkPeerAddress("192.0.0.1"),
-			nc.NetworkPeerPort(9090),
+			semconv.NetworkPeerAddress("192.0.0.1"),
+			semconv.NetworkPeerPort(9090),
 		}},
-	}, nc.networkPeer)
+	}, networkPeerAttrs)
 }
 
 func TestNetworkPeerAddress(t *testing.T) {
 	t.Parallel()
 
 	expected := attribute.Key("network.peer.address").String(addr)
-	qt.Check(t, qt.Equals(nc.NetworkPeerAddress(addr), expected))
+	qt.Check(t, qt.Equals(semconv.NetworkPeerAddress(addr), expected))
 }
 
 func TestNetworkPeerPort(t *testing.T) {
 	t.Parallel()
 
 	expected := attribute.Key("network.peer.port").Int(port)
-	qt.Check(t, qt.Equals(nc.NetworkPeerPort(port), expected))
+	qt.Check(t, qt.Equals(semconv.NetworkPeerPort(port), expected))
 }
 
 func TestNetFamily(t *testing.T) {
