@@ -3,8 +3,8 @@ module example/basic
 go 1.26.0
 
 require (
-	azugo.io/azugo v0.38.2
-	azugo.io/core v0.38.2
+	azugo.io/azugo v0.39.0
+	azugo.io/core v0.39.0
 	azugo.io/opentelemetry v0.0.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.28.0
