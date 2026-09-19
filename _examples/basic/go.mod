@@ -3,8 +3,8 @@ module example/basic
 go 1.26.0
 
 require (
-	azugo.io/azugo v0.39.0
-	azugo.io/core v0.39.0
+	azugo.io/azugo v0.39.3
+	azugo.io/core v0.39.2
 	azugo.io/opentelemetry v0.0.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.28.0
@@ -80,7 +80,7 @@ require (
 	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
-	google.golang.org/grpc v1.83.2 // indirect
+	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
 

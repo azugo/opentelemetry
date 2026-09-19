@@ -1,7 +1,7 @@
-azugo.io/azugo v0.39.0 h1:wQTopfXKjhoBezjalbdgEUrxFfbzmlua+K5j+nmjmeg=
-azugo.io/azugo v0.39.0/go.mod h1:rEcnhzGwAB7MnPNY3aaYVw48/2nXf+zl55k9VP2obHg=
-azugo.io/core v0.39.0 h1:oPW3aevbYu0Frggs8P+LbTG7BaY10CBzsdHB5CAl3r4=
-azugo.io/core v0.39.0/go.mod h1:fu/wLc0iIjcBhs9f5U9uS/QX7jVJlwZyBe4bidmsIHA=
+azugo.io/azugo v0.39.3 h1:I6o49t10Qhh3KD2oPxRIPc1zklnI/E8A86v7bnKtwoI=
+azugo.io/azugo v0.39.3/go.mod h1:rw4NXTwMYb2t8Ftw+VIMDzqP5jITUO/qJPx7zZg4xok=
+azugo.io/core v0.39.2 h1:6Abkcg+RMY2ZPhZpML1OHNzcTXYY6NBGwJ6hzs1WwJo=
+azugo.io/core v0.39.2/go.mod h1:fu/wLc0iIjcBhs9f5U9uS/QX7jVJlwZyBe4bidmsIHA=
 github.com/VictoriaMetrics/metrics v1.44.0 h1:Fr8yqQSV+ZfYaDD/anqk1E8e9YPgfleSleJmAI0M0Tw=
 github.com/VictoriaMetrics/metrics v1.44.0/go.mod h1:xDM82ULLYCYdFRgQ2JBxi8Uf1+8En1So9YUwlGTOqTc=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=
@@ -175,8 +175,8 @@ google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 h1:
 google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688/go.mod h1:1RJ9BQGyNdZwkGc1eTqkErfRZ6RJyYPHZo73BZ1vQqI=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 h1:cYNAzI2sUwhmCcoj9TxvihSrqsxt6uIkj3rDRhSDmW4=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688/go.mod h1:DjtHYE8FKJLivXcBEjGwndXfIC23G0VpXiXKqG179uA=
-google.golang.org/grpc v1.83.2 h1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=
-google.golang.org/grpc v1.83.2/go.mod h1:YPI1hK3kDked6iHvgX3tR0y+nX/qpMFKhPgFsokw1S8=
+google.golang.org/grpc v1.84.0 h1:soMyaPJ8pAak5PIQ0DGBUir0XRo2fRoMqhNWMLlLxO0=
+google.golang.org/grpc v1.84.0/go.mod h1:ljCht0DrxQrXBDRTZp52Qxh3Ffk8CdYm2sj4O2QN2C0=
 google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
 google.golang.org/protobuf v1.36.12/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

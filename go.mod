@@ -3,8 +3,8 @@ module azugo.io/opentelemetry
 go 1.26.0
 
 require (
-	azugo.io/azugo v0.39.0
-	azugo.io/core v0.39.0
+	azugo.io/azugo v0.39.3
+	azugo.io/core v0.39.2
 	github.com/go-quicktest/qt v1.102.0
 	github.com/google/go-cmp v0.7.0
 	github.com/kr/pretty v0.3.1
@@ -26,7 +26,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.46.0
 	go.opentelemetry.io/otel/trace v1.46.0
 	go.uber.org/zap v1.28.0
-	google.golang.org/grpc v1.83.2
+	google.golang.org/grpc v1.84.0
 )
 
 require (
