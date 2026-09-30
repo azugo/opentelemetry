@@ -5,6 +5,7 @@ package semconvutil
 
 import (
 	"fmt"
+	"strings"
 
 	"azugo.io/azugo"
 	"azugo.io/core/http"
@@ -12,6 +13,19 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
+
+var methodLookup = map[string]attribute.KeyValue{
+	http.MethodConnect.String(): semconv.HTTPRequestMethodConnect,
+	http.MethodDelete.String():  semconv.HTTPRequestMethodDelete,
+	http.MethodGet.String():     semconv.HTTPRequestMethodGet,
+	http.MethodHead.String():    semconv.HTTPRequestMethodHead,
+	http.MethodOptions.String(): semconv.HTTPRequestMethodOptions,
+	http.MethodPatch.String():   semconv.HTTPRequestMethodPatch,
+	http.MethodPost.String():    semconv.HTTPRequestMethodPost,
+	http.MethodPut.String():     semconv.HTTPRequestMethodPut,
+	http.MethodQuery.String():   semconv.HTTPRequestMethodQuery,
+	http.MethodTrace.String():   semconv.HTTPRequestMethodTrace,
+}
 
 // HTTPServerRequest returns trace attributes for an HTTP request received by a
 // server.
@@ -60,7 +74,10 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 		network.local.port                    The request doesn't have access to the underlying socket.
 	*/
 	n := 3 // Method, scheme and host name.
-	host, p := splitHostPort(ctx.Host())
+
+	// Request strings alias fasthttp buffers that are reused by the next request
+	// on the connection before the span is exported, so they must be copied.
+	host, p := splitHostPort(strings.Clone(ctx.Host()))
 
 	hostPort := requiredHTTPPort(ctx.IsTLS(), p)
 	if hostPort > 0 {
@@ -75,7 +92,7 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 		}
 	}
 
-	useragent := ctx.UserAgent()
+	useragent := strings.Clone(ctx.UserAgent())
 	if useragent != "" {
 		n++
 	}
@@ -85,7 +102,7 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 		n++
 	}
 
-	target := ctx.Path()
+	target := strings.Clone(ctx.Path())
 	if target != "" {
 		n++
 	}
@@ -191,12 +208,18 @@ func HTTPClientStatus(code int) (codes.Code, string) {
 	return codes.Unset, ""
 }
 
+// httpRequestMethodAttr returns the request method attribute. The method can
+// alias request memory, so it is never retained as is.
 func httpRequestMethodAttr(method string) attribute.KeyValue {
 	if method == "" {
-		return semconv.HTTPRequestMethodKey.String(http.MethodGet.String())
+		return semconv.HTTPRequestMethodGet
 	}
 
-	return semconv.HTTPRequestMethodKey.String(method)
+	if attr, ok := methodLookup[method]; ok {
+		return attr
+	}
+
+	return semconv.HTTPRequestMethodKey.String(strings.Clone(method))
 }
 
 func httpSchemeAttr(https bool) attribute.KeyValue {

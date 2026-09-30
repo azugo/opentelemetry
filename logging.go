@@ -6,6 +6,7 @@ package opentelemetry
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/log"
@@ -73,7 +74,7 @@ func (l *logDriver) With(fields []zapcore.Field) zapcore.Core {
 func (l *logDriver) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 	r := log.Record{}
 	r.SetTimestamp(ent.Time)
-	r.SetBody(attribute.StringValue(ent.Message))
+	r.SetBody(attribute.StringValue(strings.Clone(ent.Message)))
 	r.SetSeverity(convertLogLevel(ent.Level))
 	r.SetSeverityText(ent.Level.String())
 
