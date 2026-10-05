@@ -8,6 +8,7 @@ import (
 	"testing"
 	"unsafe"
 
+	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
@@ -21,7 +22,7 @@ func TestHTTPRequestMethodAttr(t *testing.T) {
 		// Server request methods alias fasthttp buffers that are reused by the
 		// next request, so the attribute must not keep a reference to them.
 		buf := []byte(method)
-		attr := httpRequestMethodAttr(unsafe.String(&buf[0], len(buf)))
+		attr := httpRequestMethodAttr(http.Method(unsafe.String(&buf[0], len(buf))))
 
 		clear(buf)
 

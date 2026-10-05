@@ -86,7 +86,7 @@ func HTTPClientRequest(req *http.Request) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n+req.Header.Len())
 
-	attrs = append(attrs, httpRequestMethodAttr(string(req.Header.Method())))
+	attrs = append(attrs, httpRequestMethodAttr(http.Method(req.Header.Method())))
 	attrs = append(attrs, httpSchemeAttr(isTLS))
 	attrs = append(attrs, semconv.ServerAddress(host))
 	attrs = append(attrs, semconv.URLFull(uri.String()))

@@ -14,17 +14,17 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
 
-var methodLookup = map[string]attribute.KeyValue{
-	http.MethodConnect.String(): semconv.HTTPRequestMethodConnect,
-	http.MethodDelete.String():  semconv.HTTPRequestMethodDelete,
-	http.MethodGet.String():     semconv.HTTPRequestMethodGet,
-	http.MethodHead.String():    semconv.HTTPRequestMethodHead,
-	http.MethodOptions.String(): semconv.HTTPRequestMethodOptions,
-	http.MethodPatch.String():   semconv.HTTPRequestMethodPatch,
-	http.MethodPost.String():    semconv.HTTPRequestMethodPost,
-	http.MethodPut.String():     semconv.HTTPRequestMethodPut,
-	http.MethodQuery.String():   semconv.HTTPRequestMethodQuery,
-	http.MethodTrace.String():   semconv.HTTPRequestMethodTrace,
+var methodLookup = map[http.Method]attribute.KeyValue{
+	http.MethodConnect: semconv.HTTPRequestMethodConnect,
+	http.MethodDelete:  semconv.HTTPRequestMethodDelete,
+	http.MethodGet:     semconv.HTTPRequestMethodGet,
+	http.MethodHead:    semconv.HTTPRequestMethodHead,
+	http.MethodOptions: semconv.HTTPRequestMethodOptions,
+	http.MethodPatch:   semconv.HTTPRequestMethodPatch,
+	http.MethodPost:    semconv.HTTPRequestMethodPost,
+	http.MethodPut:     semconv.HTTPRequestMethodPut,
+	http.MethodQuery:   semconv.HTTPRequestMethodQuery,
+	http.MethodTrace:   semconv.HTTPRequestMethodTrace,
 }
 
 // HTTPServerRequest returns trace attributes for an HTTP request received by a
@@ -128,7 +128,7 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n)
 
-	attrs = append(attrs, httpRequestMethodAttr(ctx.Method().String()))
+	attrs = append(attrs, httpRequestMethodAttr(ctx.Method()))
 	attrs = append(attrs, httpSchemeAttr(ctx.IsTLS()))
 	attrs = append(attrs, semconv.ServerAddress(host))
 
@@ -210,7 +210,7 @@ func HTTPClientStatus(code int) (codes.Code, string) {
 
 // httpRequestMethodAttr returns the request method attribute. The method can
 // alias request memory, so it is never retained as is.
-func httpRequestMethodAttr(method string) attribute.KeyValue {
+func httpRequestMethodAttr(method http.Method) attribute.KeyValue {
 	if method == "" {
 		return semconv.HTTPRequestMethodGet
 	}
@@ -219,7 +219,7 @@ func httpRequestMethodAttr(method string) attribute.KeyValue {
 		return attr
 	}
 
-	return semconv.HTTPRequestMethodKey.String(strings.Clone(method))
+	return semconv.HTTPRequestMethodKey.String(strings.Clone(string(method)))
 }
 
 func httpSchemeAttr(https bool) attribute.KeyValue {
