@@ -6,26 +6,29 @@ package semconvutil
 
 import (
 	"testing"
-	"unsafe"
 
 	"azugo.io/core/http"
 	"github.com/go-quicktest/qt"
+	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
 
 func TestHTTPRequestMethodAttr(t *testing.T) {
 	t.Parallel()
 
-	qt.Check(t, qt.Equals(httpRequestMethodAttr(""), semconv.HTTPRequestMethodGet))
+	tests := []struct {
+		method http.Method
+		want   attribute.KeyValue
+	}{
+		{"", semconv.HTTPRequestMethodGet},
+		{http.MethodGet, semconv.HTTPRequestMethodGet},
+		{http.MethodDelete, semconv.HTTPRequestMethodDelete},
+		{http.MethodQuery, semconv.HTTPRequestMethodQuery},
+		{"get", semconv.HTTPRequestMethodOther},
+		{"PROPFIND", semconv.HTTPRequestMethodOther},
+	}
 
-	for _, method := range []string{"GET", "DELETE", "QUERY", "PROPFIND"} {
-		// Server request methods alias fasthttp buffers that are reused by the
-		// next request, so the attribute must not keep a reference to them.
-		buf := []byte(method)
-		attr := httpRequestMethodAttr(http.Method(unsafe.String(&buf[0], len(buf))))
-
-		clear(buf)
-
-		qt.Check(t, qt.Equals(attr, semconv.HTTPRequestMethodKey.String(method)), qt.Commentf("method %q", method))
+	for _, tt := range tests {
+		qt.Check(t, qt.Equals(httpRequestMethodAttr(tt.method), tt.want), qt.Commentf("method %q", tt.method))
 	}
 }

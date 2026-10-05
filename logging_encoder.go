@@ -25,8 +25,7 @@ type namespace struct {
 // logObjectEncoder implements zapcore.ObjectEncoder.
 // It encodes given fields to OTel key-values.
 //
-// Log records are exported asynchronously, so string values are copied: azugo
-// request fields alias fasthttp buffers that are reused by the next request.
+// String values are copied as they may alias reused fasthttp buffers.
 type logObjectEncoder struct {
 	// root is a pointer to the default namespace
 	root *namespace

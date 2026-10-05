@@ -48,6 +48,11 @@ func HTTPClientRequest(req *http.Request) []attribute.KeyValue {
 	*/
 	n := 7 // Method, scheme, host name, full URL and network protocol data.
 
+	methodAttr := httpRequestMethodAttr(http.Method(req.Header.Method()))
+	if methodAttr == semconv.HTTPRequestMethodOther {
+		n++
+	}
+
 	uri := fasthttp.AcquireURI()
 	defer fasthttp.ReleaseURI(uri)
 
@@ -86,7 +91,11 @@ func HTTPClientRequest(req *http.Request) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n+req.Header.Len())
 
-	attrs = append(attrs, httpRequestMethodAttr(http.Method(req.Header.Method())))
+	attrs = append(attrs, methodAttr)
+	if methodAttr == semconv.HTTPRequestMethodOther {
+		attrs = append(attrs, semconv.HTTPRequestMethodOriginal(string(req.Header.Method())))
+	}
+
 	attrs = append(attrs, httpSchemeAttr(isTLS))
 	attrs = append(attrs, semconv.ServerAddress(host))
 	attrs = append(attrs, semconv.URLFull(uri.String()))

@@ -17,8 +17,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
 
-// withHostHeader sends host in the Host header while keeping the request on
-// the test client's keep-alive connection, which is picked by the URI host.
+// withHostHeader sends host in the Host header while keeping the same keep-alive connection.
 func withHostHeader(host string) azugo.TestClientOption {
 	return func(_ *azugo.TestClient, r *fasthttp.Request) {
 		r.UseHostHeader = true
@@ -26,11 +25,7 @@ func withHostHeader(host string) azugo.TestClientOption {
 	}
 }
 
-// TestRequestAttributesSurviveConnectionReuse verifies that server span
-// attributes are not corrupted by later requests on the same keep-alive
-// connection. Azugo exposes request values as strings over fasthttp buffers
-// that are reused for every request on the connection, while the batch span
-// processor reads the attributes only after the handler has returned.
+// TestRequestAttributesSurviveConnectionReuse verifies that later requests on the same connection don't corrupt span attributes.
 func TestRequestAttributesSurviveConnectionReuse(t *testing.T) {
 	exp := tracetest.NewInMemoryExporter()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exp))
@@ -50,6 +45,7 @@ func TestRequestAttributesSurviveConnectionReuse(t *testing.T) {
 	app.Get("/items/{id}", noContent)
 	app.Get("/items/{id}/details", noContent)
 	app.Delete("/items/{id}", noContent)
+	app.Handle("PROPFIND", "/items/{id}", noContent)
 	app.Get("/healthz", func(ctx *azugo.Context) {
 		ctx.SkipRequestLog()
 		noContent(ctx)
@@ -65,11 +61,11 @@ func TestRequestAttributesSurviveConnectionReuse(t *testing.T) {
 	traced := []request{
 		{http.MethodGet, "/items/42", "api.example", "client/1"},
 		{http.MethodGet, "/items/42/details", "api.example.com", "client/22"},
+		{"PROPFIND", "/items/42", "dav.example.com", "client/4444"},
 		{http.MethodDelete, "/items/42", "admin.example.com", "client/333"},
 	}
 
-	// A single client keeps one keep-alive connection, so every request is
-	// parsed into the same server-side buffers.
+	// A single client reuses one connection and so the same server buffers.
 	client := app.TestClient()
 
 	send := func(r request) {
@@ -105,7 +101,12 @@ func TestRequestAttributesSurviveConnectionReuse(t *testing.T) {
 		}
 		comment := qt.Commentf("%s %s", want.method, want.path)
 
-		qt.Check(t, qt.Equals(value(semconv.HTTPRequestMethodKey), want.method.String()), comment)
+		method := value(semconv.HTTPRequestMethodKey)
+		if method == semconv.HTTPRequestMethodOther.Value.AsString() {
+			method = value(semconv.HTTPRequestMethodOriginalKey)
+		}
+
+		qt.Check(t, qt.Equals(method, want.method.String()), comment)
 		qt.Check(t, qt.Equals(value(semconv.URLPathKey), want.path), comment)
 		qt.Check(t, qt.Equals(value(semconv.ServerAddressKey), want.host), comment)
 		qt.Check(t, qt.Equals(value(semconv.UserAgentOriginalKey), want.userAgent), comment)

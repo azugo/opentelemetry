@@ -16,8 +16,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// logRecorder keeps emitted records the way the batch processor queues them
-// for export: cloned, but still sharing string memory with the emitter.
+// logRecorder keeps cloned records like the batch processor does.
 type logRecorder struct {
 	mu      sync.Mutex
 	records []sdklog.Record
@@ -37,9 +36,7 @@ func (r *logRecorder) OnEmit(_ context.Context, record *sdklog.Record) error {
 func (*logRecorder) Shutdown(context.Context) error   { return nil }
 func (*logRecorder) ForceFlush(context.Context) error { return nil }
 
-// TestLogValuesSurviveBufferReuse verifies that the log bridge copies strings
-// before handing them to the SDK. Azugo request log fields alias fasthttp
-// buffers that the next request reuses before the batch processor exports.
+// TestLogValuesSurviveBufferReuse verifies that the log bridge copies strings before export.
 func TestLogValuesSurviveBufferReuse(t *testing.T) {
 	rec := &logRecorder{}
 	lp := sdklog.NewLoggerProvider(sdklog.WithProcessor(rec))

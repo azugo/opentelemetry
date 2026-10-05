@@ -75,8 +75,12 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 	*/
 	n := 3 // Method, scheme and host name.
 
-	// Request strings alias fasthttp buffers that are reused by the next request
-	// on the connection before the span is exported, so they must be copied.
+	methodAttr := httpRequestMethodAttr(ctx.Method())
+	if methodAttr == semconv.HTTPRequestMethodOther {
+		n++
+	}
+
+	// Request strings alias reused fasthttp buffers, so they must be copied.
 	host, p := splitHostPort(strings.Clone(ctx.Host()))
 
 	hostPort := requiredHTTPPort(ctx.IsTLS(), p)
@@ -128,7 +132,11 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n)
 
-	attrs = append(attrs, httpRequestMethodAttr(ctx.Method()))
+	attrs = append(attrs, methodAttr)
+	if methodAttr == semconv.HTTPRequestMethodOther {
+		attrs = append(attrs, semconv.HTTPRequestMethodOriginal(strings.Clone(ctx.Method().String())))
+	}
+
 	attrs = append(attrs, httpSchemeAttr(ctx.IsTLS()))
 	attrs = append(attrs, semconv.ServerAddress(host))
 
@@ -208,8 +216,7 @@ func HTTPClientStatus(code int) (codes.Code, string) {
 	return codes.Unset, ""
 }
 
-// httpRequestMethodAttr returns the request method attribute. The method can
-// alias request memory, so it is never retained as is.
+// httpRequestMethodAttr returns the request method attribute, or _OTHER for unknown methods.
 func httpRequestMethodAttr(method http.Method) attribute.KeyValue {
 	if method == "" {
 		return semconv.HTTPRequestMethodGet
@@ -219,7 +226,7 @@ func httpRequestMethodAttr(method http.Method) attribute.KeyValue {
 		return attr
 	}
 
-	return semconv.HTTPRequestMethodKey.String(strings.Clone(string(method)))
+	return semconv.HTTPRequestMethodOther
 }
 
 func httpSchemeAttr(https bool) attribute.KeyValue {
