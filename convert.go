@@ -8,6 +8,7 @@ import (
 	"math"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -20,7 +21,7 @@ func convertValue(v any) attribute.Value {
 	case bool:
 		return attribute.BoolValue(val)
 	case string:
-		return attribute.StringValue(val)
+		return attribute.StringValue(strings.Clone(val))
 	case int:
 		return attribute.Int64Value(int64(val))
 	case int8:
@@ -91,7 +92,7 @@ func convertValue(v any) attribute.Value {
 
 			switch k.Kind() { //nolint:exhaustive
 			case reflect.String:
-				key = k.String()
+				key = strings.Clone(k.String())
 			default:
 				key = fmt.Sprintf("%+v", k.Interface())
 			}

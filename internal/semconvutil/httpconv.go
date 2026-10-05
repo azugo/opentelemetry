@@ -5,6 +5,7 @@ package semconvutil
 
 import (
 	"fmt"
+	"strings"
 
 	"azugo.io/azugo"
 	"azugo.io/core/http"
@@ -12,6 +13,19 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 )
+
+var methodLookup = map[http.Method]attribute.KeyValue{
+	http.MethodConnect: semconv.HTTPRequestMethodConnect,
+	http.MethodDelete:  semconv.HTTPRequestMethodDelete,
+	http.MethodGet:     semconv.HTTPRequestMethodGet,
+	http.MethodHead:    semconv.HTTPRequestMethodHead,
+	http.MethodOptions: semconv.HTTPRequestMethodOptions,
+	http.MethodPatch:   semconv.HTTPRequestMethodPatch,
+	http.MethodPost:    semconv.HTTPRequestMethodPost,
+	http.MethodPut:     semconv.HTTPRequestMethodPut,
+	http.MethodQuery:   semconv.HTTPRequestMethodQuery,
+	http.MethodTrace:   semconv.HTTPRequestMethodTrace,
+}
 
 // HTTPServerRequest returns trace attributes for an HTTP request received by a
 // server.
@@ -60,7 +74,14 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 		network.local.port                    The request doesn't have access to the underlying socket.
 	*/
 	n := 3 // Method, scheme and host name.
-	host, p := splitHostPort(ctx.Host())
+
+	methodAttr := httpRequestMethodAttr(ctx.Method())
+	if methodAttr == semconv.HTTPRequestMethodOther {
+		n++
+	}
+
+	// Request strings alias reused fasthttp buffers, so they must be copied.
+	host, p := splitHostPort(strings.Clone(ctx.Host()))
 
 	hostPort := requiredHTTPPort(ctx.IsTLS(), p)
 	if hostPort > 0 {
@@ -75,7 +96,7 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 		}
 	}
 
-	useragent := ctx.UserAgent()
+	useragent := strings.Clone(ctx.UserAgent())
 	if useragent != "" {
 		n++
 	}
@@ -85,7 +106,7 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 		n++
 	}
 
-	target := ctx.Path()
+	target := strings.Clone(ctx.Path())
 	if target != "" {
 		n++
 	}
@@ -111,7 +132,11 @@ func HTTPServerRequest(ctx *azugo.Context) []attribute.KeyValue {
 
 	attrs := make([]attribute.KeyValue, 0, n)
 
-	attrs = append(attrs, httpRequestMethodAttr(ctx.Method().String()))
+	attrs = append(attrs, methodAttr)
+	if methodAttr == semconv.HTTPRequestMethodOther {
+		attrs = append(attrs, semconv.HTTPRequestMethodOriginal(strings.Clone(ctx.Method().String())))
+	}
+
 	attrs = append(attrs, httpSchemeAttr(ctx.IsTLS()))
 	attrs = append(attrs, semconv.ServerAddress(host))
 
@@ -191,12 +216,17 @@ func HTTPClientStatus(code int) (codes.Code, string) {
 	return codes.Unset, ""
 }
 
-func httpRequestMethodAttr(method string) attribute.KeyValue {
+// httpRequestMethodAttr returns the request method attribute, or _OTHER for unknown methods.
+func httpRequestMethodAttr(method http.Method) attribute.KeyValue {
 	if method == "" {
-		return semconv.HTTPRequestMethodKey.String(http.MethodGet.String())
+		return semconv.HTTPRequestMethodGet
 	}
 
-	return semconv.HTTPRequestMethodKey.String(method)
+	if attr, ok := methodLookup[method]; ok {
+		return attr
+	}
+
+	return semconv.HTTPRequestMethodOther
 }
 
 func httpSchemeAttr(https bool) attribute.KeyValue {

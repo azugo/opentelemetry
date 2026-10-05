@@ -4,6 +4,7 @@
 package opentelemetry
 
 import (
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -23,6 +24,8 @@ type namespace struct {
 
 // logObjectEncoder implements zapcore.ObjectEncoder.
 // It encodes given fields to OTel key-values.
+//
+// String values are copied as they may alias reused fasthttp buffers.
 type logObjectEncoder struct {
 	// root is a pointer to the default namespace
 	root *namespace
@@ -108,7 +111,7 @@ func (m *logObjectEncoder) AddInt(k string, v int) {
 }
 
 func (m *logObjectEncoder) AddString(k string, v string) {
-	m.cur.attrs = append(m.cur.attrs, attribute.String(k, v))
+	m.cur.attrs = append(m.cur.attrs, attribute.String(k, strings.Clone(v)))
 }
 
 func (m *logObjectEncoder) AddUint64(k string, v uint64) {
@@ -257,7 +260,7 @@ func (a *logArrayEncoder) AppendInt64(v int64) {
 }
 
 func (a *logArrayEncoder) AppendString(v string) {
-	a.elems = append(a.elems, attribute.StringValue(v))
+	a.elems = append(a.elems, attribute.StringValue(strings.Clone(v)))
 }
 
 func (a *logArrayEncoder) AppendComplex128(v complex128) {
