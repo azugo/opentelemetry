@@ -232,15 +232,18 @@ const (
 )
 
 type otlpTarget struct {
-	GRPC     bool
-	Host     string
-	Insecure bool
-	TLS      *tls.Config
-	Headers  map[string]string
+	GRPC            bool
+	Host            string
+	Insecure        bool
+	TLS             *tls.Config
+	Headers         map[string]string
+	MaxResponseSize int64
 }
 
 func otlpTargetFromConfig(config *Configuration) (*otlpTarget, error) {
-	t := &otlpTarget{}
+	t := &otlpTarget{
+		MaxResponseSize: config.MaxResponseSize,
+	}
 
 	switch config.Protocol {
 	case "", ProtocolHTTPProtobuf:
@@ -307,7 +310,7 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 
 		client = otlptracegrpc.NewClient(opt...)
 	} else {
-		opt := make([]otlptracehttp.Option, 0, 3)
+		opt := make([]otlptracehttp.Option, 0, 4)
 
 		if target.Host != "" {
 			opt = append(opt, otlptracehttp.WithEndpoint(target.Host))
@@ -321,6 +324,10 @@ func newTraceProvider(app *azugo.App, config *Configuration) (*trace.TracerProvi
 
 		if target.Headers != nil {
 			opt = append(opt, otlptracehttp.WithHeaders(target.Headers))
+		}
+
+		if target.MaxResponseSize > 0 {
+			opt = append(opt, otlptracehttp.WithMaxResponseSize(target.MaxResponseSize))
 		}
 
 		client = otlptracehttp.NewClient(opt...)
@@ -377,7 +384,7 @@ func newLogProvider(app *azugo.App, config *Configuration) (*log.LoggerProvider,
 
 		exporter, err = otlploggrpc.New(app.BackgroundContext(), opt...)
 	} else {
-		opt := make([]otlploghttp.Option, 0, 3)
+		opt := make([]otlploghttp.Option, 0, 4)
 
 		if target.Host != "" {
 			opt = append(opt, otlploghttp.WithEndpoint(target.Host))
@@ -391,6 +398,10 @@ func newLogProvider(app *azugo.App, config *Configuration) (*log.LoggerProvider,
 
 		if target.Headers != nil {
 			opt = append(opt, otlploghttp.WithHeaders(target.Headers))
+		}
+
+		if target.MaxResponseSize > 0 {
+			opt = append(opt, otlploghttp.WithMaxResponseSize(target.MaxResponseSize))
 		}
 
 		exporter, err = otlploghttp.New(app.BackgroundContext(), opt...)
@@ -439,7 +450,7 @@ func newMeterProvider(app *azugo.App, config *Configuration) (*metric.MeterProvi
 
 		exporter, err = otlpmetricgrpc.New(app.BackgroundContext(), opt...)
 	} else {
-		opt := make([]otlpmetrichttp.Option, 0, 3)
+		opt := make([]otlpmetrichttp.Option, 0, 4)
 
 		if target.Host != "" {
 			opt = append(opt, otlpmetrichttp.WithEndpoint(target.Host))
@@ -453,6 +464,10 @@ func newMeterProvider(app *azugo.App, config *Configuration) (*metric.MeterProvi
 
 		if target.Headers != nil {
 			opt = append(opt, otlpmetrichttp.WithHeaders(target.Headers))
+		}
+
+		if target.MaxResponseSize > 0 {
+			opt = append(opt, otlpmetrichttp.WithMaxResponseSize(target.MaxResponseSize))
 		}
 
 		exporter, err = otlpmetrichttp.New(app.BackgroundContext(), opt...)

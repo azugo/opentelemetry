@@ -1,11 +1,12 @@
 package main
 
 import (
+	"azugo.io/opentelemetry"
+
 	"azugo.io/azugo"
 	"azugo.io/azugo/config"
 	"azugo.io/azugo/server"
 	"azugo.io/core/validation"
-	"azugo.io/opentelemetry"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )

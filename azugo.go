@@ -55,6 +55,7 @@ func Use(app *azugo.App, config *Configuration, opts ...Option) (core.Tasker, er
 	otel.SetTextMapPropagator(newPropagator())
 	otel.SetTracerProvider(traceProvider)
 	otel.SetMeterProvider(meterProvider)
+	otel.SetLoggerProvider(logProvider)
 
 	app.UsePriority(tracingMiddleware(opts...))
 

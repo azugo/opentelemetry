@@ -20,6 +20,7 @@ type Configuration struct {
 	ServiceName           string   `mapstructure:"service_name"`
 	ElasticAPMSecretToken string   `mapstructure:"elastic_apm_secret_token"`
 	ResourceAttributes    []string `mapstructure:"resource_attributes"`
+	MaxResponseSize       int64    `mapstructure:"max_response_size" validate:"omitempty,min=0"`
 }
 
 // Validate OpenTracing configuration section.
@@ -43,6 +44,7 @@ func (c *Configuration) Bind(prefix string, v *viper.Viper) {
 	_ = v.BindEnv(prefix+".insecure_skip_verify", "OTEL_EXPORTER_OTLP_INSECURE_SKIP_VERIFY")
 	_ = v.BindEnv(prefix+".service_name", "OTEL_SERVICE_NAME")
 	_ = v.BindEnv(prefix+".elastic_apm_secret_token", "ELASTIC_APM_SECRET_TOKEN")
+	_ = v.BindEnv(prefix+".max_response_size", "OTEL_EXPORTER_OTLP_MAX_RESPONSE_SIZE")
 }
 
 // IsDisabled returns true if the tracing is disabled.
