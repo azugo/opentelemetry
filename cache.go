@@ -21,6 +21,7 @@ import (
 const (
 	attrCacheBackend  = "azugo.cache.backend"
 	attrCacheInstance = "azugo.cache.instance"
+	attrCacheKey      = "azugo.cache.key"
 )
 
 // cacheAttrs returns backend and instance attributes from event args.
@@ -75,7 +76,7 @@ func newCacheRecorder(mp metric.MeterProvider) InstrumentationRecorderFunc {
 
 	return func(ctx context.Context, tr trace.Tracer, _ propagation.TextMapPropagator, spfmt InstrumentationSpanNameFormatter, op string, args ...any) (func(err error), bool) {
 		var (
-			name   string
+			key    string
 			method string
 			ok     bool
 		)
@@ -89,21 +90,21 @@ func newCacheRecorder(mp metric.MeterProvider) InstrumentationRecorderFunc {
 		case cache.InstrumentationGet:
 			countCache(ctx, gets, args...)
 
-			name, ok = cache.InstrGet(op, args...)
+			key, ok = cache.InstrGet(op, args...)
 			if !ok {
 				return nil, false
 			}
 
 			method = "GET "
 		case cache.InstrumentationSet:
-			name, ok = cache.InstrSet(op, args...)
+			key, ok = cache.InstrSet(op, args...)
 			if !ok {
 				return nil, false
 			}
 
 			method = "SET "
 		case cache.InstrumentationDelete:
-			name, ok = cache.InstrDelete(op, args...)
+			key, ok = cache.InstrDelete(op, args...)
 			if !ok {
 				return nil, false
 			}
@@ -123,11 +124,17 @@ func newCacheRecorder(mp metric.MeterProvider) InstrumentationRecorderFunc {
 
 		spanName := spfmt(ctx, op, args...)
 		if spanName == "" {
-			spanName = method + name
+			instance, _ := cache.InstrInstance(args...)
+			spanName = method + instance
+		}
+
+		attrs := append(cacheAttrs(args...), semconv.ServicePeerName("cache"))
+		if key != "" {
+			attrs = append(attrs, attribute.String(attrCacheKey, key))
 		}
 
 		opts := []trace.SpanStartOption{
-			trace.WithAttributes(append(cacheAttrs(args...), semconv.ServicePeerName("cache"))...),
+			trace.WithAttributes(attrs...),
 			trace.WithSpanKind(trace.SpanKindInternal),
 		}
 

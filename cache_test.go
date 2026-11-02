@@ -70,8 +70,8 @@ func TestCacheMetrics(t *testing.T) {
 	qt.Check(t, qt.Equals(sums["azugo.cache.hits"]["memory/test"], int64(0)))
 }
 
-// TestCacheSpanAttributes verifies Redis cache operation spans carry backend
-// and instance attributes.
+// TestCacheSpanAttributes verifies Redis cache operation spans are named after the instance and
+// carry backend, instance and key attributes.
 func TestCacheSpanAttributes(t *testing.T) {
 	sr := tracetest.NewSpanRecorder()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(sr))
@@ -85,7 +85,7 @@ func TestCacheSpanAttributes(t *testing.T) {
 	qt.Assert(t, qt.HasLen(ended, 1))
 
 	set := ended[0]
-	qt.Check(t, qt.Equals(set.Name(), "SET spanattr:key"))
+	qt.Check(t, qt.Equals(set.Name(), "SET spanattr"))
 
 	backend, ok := strAttr(set, attrCacheBackend)
 	qt.Check(t, qt.IsTrue(ok))
@@ -94,6 +94,30 @@ func TestCacheSpanAttributes(t *testing.T) {
 	instance, ok := strAttr(set, attrCacheInstance)
 	qt.Check(t, qt.IsTrue(ok))
 	qt.Check(t, qt.Equals(instance, "spanattr"))
+
+	key, ok := strAttr(set, attrCacheKey)
+	qt.Check(t, qt.IsTrue(ok))
+	qt.Check(t, qt.Equals(key, "spanattr:key"))
+}
+
+// TestCacheSpanSensitiveKey verifies a span of an instance with sensitive keys carries the
+// redacted key.
+func TestCacheSpanSensitiveKey(t *testing.T) {
+	sr := tracetest.NewSpanRecorder()
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(sr))
+	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+
+	i := instr(TracerProvider(tp))
+
+	i(context.Background(), cache.InstrumentationGet, "app:sessions:<redacted>", string(cache.RedisCache), "sessions")(nil)
+
+	ended := sr.Ended()
+	qt.Assert(t, qt.HasLen(ended, 1))
+	qt.Check(t, qt.Equals(ended[0].Name(), "GET sessions"))
+
+	key, ok := strAttr(ended[0], attrCacheKey)
+	qt.Check(t, qt.IsTrue(ok))
+	qt.Check(t, qt.Equals(key, "app:sessions:<redacted>"))
 }
 
 // TestMemoryCacheSpanSkipped verifies memory cache operations emit no spans
