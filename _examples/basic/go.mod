@@ -3,8 +3,8 @@ module example/basic
 go 1.26.0
 
 require (
-	azugo.io/azugo v0.50.2
-	azugo.io/core v0.50.1
+	azugo.io/azugo v0.51.0
+	azugo.io/core v0.51.0
 	azugo.io/opentelemetry v0.0.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.28.0
@@ -50,7 +50,7 @@ require (
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.1.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/valkey-io/valkey-go v1.0.79 // indirect
+	github.com/valkey-io/valkey-go v1.0.80 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.79.0 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect

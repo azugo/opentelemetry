@@ -3,8 +3,8 @@ module azugo.io/opentelemetry
 go 1.26.0
 
 require (
-	azugo.io/azugo v0.50.2
-	azugo.io/core v0.50.1
+	azugo.io/azugo v0.51.0
+	azugo.io/core v0.51.0
 	github.com/go-quicktest/qt v1.102.0
 	github.com/google/go-cmp v0.7.0
 	github.com/kr/pretty v0.3.1
@@ -67,7 +67,7 @@ require (
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.1.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/valkey-io/valkey-go v1.0.79 // indirect
+	github.com/valkey-io/valkey-go v1.0.80 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect
 	github.com/valyala/histogram v1.2.0 // indirect
